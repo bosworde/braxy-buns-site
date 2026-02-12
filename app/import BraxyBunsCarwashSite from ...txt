@@ -1,0 +1,5 @@
+import BraxyBunsCarwashSite from "../app/page";
+
+export default function Home() {
+  return <BraxyBunsCarwashSite />;
+}
