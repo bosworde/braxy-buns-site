@@ -92,8 +92,8 @@ const FALLBACK_LOGO =
 const brand = {
   name: "Braxy Buns Carwash",
   tagline: "Premium tunnel + self-serve bays. Fast, spotless, and friendly.",
-  phone: "(281) 555-0199",
-  email: "hello@braxybuns.com",
+  phone: "(713) 305 7841",
+  email: "dennis@braxybuns.com",
   addressLine: "Fulshear, TX",
   ctaPrimary: "Join Unlimited Wash Club",
   ctaSecondary: "Get Directions",
@@ -105,10 +105,14 @@ const nav = [
   { label: "Services", href: "#services" },
   { label: "Unlimited Club", href: "#club" },
   { label: "Locations", href: "#locations" },
+
+  { label: "Founder’s Letter", href: "/founders-letter" },
+
   { label: "About", href: "#about" },
   { label: "FAQ", href: "#faq" },
   { label: "Contact", href: "#contact" },
 ];
+
 
 const services = [
   {
@@ -240,34 +244,15 @@ const INK = "#061426";
 const INK_2 = "#071b33";
 const INK_3 = "#0a2b4b";
 
-// --- Favicon + Social preview (Next.js example) ---
-// Place these files in /public:
-//   /favicon.ico
-//   /icon.png
-//   /apple-touch-icon.png
-//   /og-image.png   (1200x630)
-//   /twitter-image.png (1200x630)
-// Then add tags in your <head> (Next.js: app/layout.tsx or pages/_document.tsx):
-//   <link rel="icon" href="/favicon.ico" />
-//   <meta property="og:image" content="/og-image.png" />
-//   <meta name="twitter:image" content="/twitter-image.png" />
-
 function classNames(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
 }
 
-function Logo({
-  variant,
-}: {
-  variant: "nav" | "hero";
-}) {
+function Logo({ variant }: { variant: "nav" | "hero" }) {
   const isNav = variant === "nav";
   return (
     <motion.div
-      className={classNames(
-        "relative",
-        isNav ? "rounded-2xl" : "rounded-[2.75rem]"
-      )}
+      className={classNames("relative", isNav ? "rounded-2xl" : "rounded-[2.75rem]")}
       animate={{ y: isNav ? [0, -2, 0] : [0, -6, 0] }}
       transition={{ duration: isNav ? 5.5 : 6.5, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -285,12 +270,7 @@ function Logo({
         }}
       />
 
-      <div
-        className={classNames(
-          "relative overflow-hidden",
-          isNav ? "rounded-2xl" : "rounded-[2.75rem]"
-        )}
-      >
+      <div className={classNames("relative overflow-hidden", isNav ? "rounded-2xl" : "rounded-[2.75rem]")}>
         {/* Subtle glossy sweep */}
         <motion.div
           aria-hidden="true"
@@ -378,25 +358,14 @@ function Stars({ rating }: { rating: number }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={classNames(
-            "h-4 w-4",
-            i < rating ? "fill-current" : "opacity-30"
-          )}
+          className={classNames("h-4 w-4", i < rating ? "fill-current" : "opacity-30")}
         />
       ))}
     </div>
   );
 }
 
-function SectionHeader({
-  eyebrow,
-  title,
-  desc,
-}: {
-  eyebrow: string;
-  title: string;
-  desc?: string;
-}) {
+function SectionHeader({ eyebrow, title, desc }: { eyebrow: string; title: string; desc?: string }) {
   return (
     <div className="mx-auto max-w-2xl text-center text-white">
       <div className="mb-3 flex items-center justify-center gap-2">
@@ -548,10 +517,7 @@ function Hero() {
               Now planning near {brand.addressLine}
             </Badge>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-              <span
-                className="inline-block bg-clip-text text-transparent"
-                style={{ backgroundImage: AUTISM_GRADIENT }}
-              >
+              <span className="inline-block bg-clip-text text-transparent" style={{ backgroundImage: AUTISM_GRADIENT }}>
                 A cleaner car in minutes
               </span>
               <span className="text-white"> —</span>
@@ -610,7 +576,8 @@ function Hero() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                {[{ t: "1st Month Club", b: "$10 off", d: "New members only. Cancel anytime after first month." },
+                {[
+                  { t: "1st Month Club", b: "$10 off", d: "New members only. Cancel anytime after first month." },
                   { t: "Free Vacuums", b: "Always", d: "High-suction bays with easy access." },
                   { t: "Community Day", b: "Give-back", d: "A portion of proceeds supports local autism resources." },
                 ].map((x) => (
@@ -653,10 +620,7 @@ function Services() {
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">
         {services.map((s) => (
-          <Card
-            key={s.title}
-            className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur"
-          >
+          <Card key={s.title} className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -697,10 +661,7 @@ function Services() {
               { title: "Spot-Free Rinse", icon: Droplets },
               { title: "Interior Vacuums", icon: Timer },
             ].map((x) => (
-              <div
-                key={x.title}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4"
-              >
+              <div key={x.title} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/5">
                   <x.icon className="h-4 w-4" />
                 </div>
@@ -899,7 +860,8 @@ function About() {
             <p className="text-sm text-white/70">{brand.mission}</p>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              {[{ t: "Give-back events", i: HeartHandshake, d: "Monthly partner days + awareness." },
+              {[
+                { t: "Give-back events", i: HeartHandshake, d: "Monthly partner days + awareness." },
                 { t: "Responsible process", i: Leaf, d: "Smart chemistry + water management." },
                 { t: "Quality checks", i: ShieldCheck, d: "Consistent results and care." },
               ].map((x) => (
@@ -1054,7 +1016,20 @@ function Contact() {
                 </div>
                 <div>
                   <div className="text-xs text-white/70">{x.k}</div>
-                  <div className="text-sm font-medium">{x.v}</div>
+                  <div className="text-sm font-medium">
+  {x.k === "Phone" ? (
+    <a href="tel:7133057841" className="hover:underline">
+      {x.v}
+    </a>
+  ) : x.k === "Email" ? (
+    <a href="mailto:dennis@braxybuns.com" className="hover:underline">
+      {x.v}
+    </a>
+  ) : (
+    x.v
+  )}
+</div>
+
                 </div>
               </div>
             ))}
@@ -1121,7 +1096,9 @@ function Footer() {
             <div className="mt-2 grid gap-1">
               <div>{brand.phone}</div>
               <div>{brand.email}</div>
-              <div className="text-white/70">© {new Date().getFullYear()} {brand.name}. All rights reserved.</div>
+              <div className="text-white/70">
+                © {new Date().getFullYear()} {brand.name}. All rights reserved.
+              </div>
             </div>
           </div>
         </div>
