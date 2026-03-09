@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import BraxyBunsMembershipSections from "@/components/BraxyBunsMembershipSections_fixed";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -49,22 +50,6 @@ import {
   Check,
 } from "lucide-react";
 
-/**
- * Braxy Buns Carwash — single-page marketing site
- *
- * IMPORTANT (why you still don't see the logo):
- * In many previews (including this canvas), there is no real `/public` folder being served.
- * So a path like `/braxy-buns-logo.png` may 404.
- *
- * Fix: We embed the logo as a data-URI so it renders instantly everywhere.
- * When you move this into your real site later, you can switch back to:
- *   <img src={LOGO_SRC} ... />
- * and place the file at /public/braxy-buns-logo.png.
- */
-
-// Logo handling:
-// In a real Next.js app, put the PNG in /public and this will work.
-// For previews that don't serve /public, we include a safe SVG fallback.
 const LOGO_SRC = "/braxy-buns-logo.png";
 const FALLBACK_LOGO =
   "data:image/svg+xml;utf8," +
@@ -85,13 +70,12 @@ const FALLBACK_LOGO =
     <text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='44' fill='white'>
       BRAXY BUNS CARWASH
     </text>
-    
   </svg>
   `);
 
 const brand = {
   name: "Braxy Buns Carwash",
-  tagline: "Premium tunnel + self-serve bays. Fast, spotless, and friendly.",
+  tagline: "Premium express tunnel wash with free vacuums. Fast, spotless, and friendly.",
   phone: "(713) 305 7841",
   email: "dennis@braxybuns.com",
   addressLine: "Fulshear, TX",
@@ -105,14 +89,11 @@ const nav = [
   { label: "Services", href: "#services" },
   { label: "Unlimited Club", href: "#club" },
   { label: "Locations", href: "#locations" },
-
   { label: "Founder’s Letter", href: "/founders-letter" },
-
   { label: "About", href: "#about" },
   { label: "FAQ", href: "#faq" },
   { label: "Contact", href: "#contact" },
 ];
-
 
 const services = [
   {
@@ -122,10 +103,10 @@ const services = [
     bullets: ["Ceramic sealant option", "Wheel + tire treatment", "Spot-free finish"],
   },
   {
-    title: "Self-Serve Bays",
-    desc: "Total control—high-pressure foam, rinse, wax, and vacuums.",
+    title: "Free Vacuum Plaza",
+    desc: "Powerful vacuums and detail space so every customer can finish their clean.",
     icon: Droplets,
-    bullets: ["Foam cannon", "High-pressure rinse", "Powerful vacs"],
+    bullets: ["18 vacuum stations", "High suction power", "Detail-friendly layout"],
   },
   {
     title: "Fast, Safe, Consistent",
@@ -138,46 +119,6 @@ const services = [
     desc: "Designed for busy schedules—with easy entry + quick lane flow.",
     icon: Timer,
     bullets: ["Express lane", "Clear signage", "Quick checkout"],
-  },
-];
-
-const clubTiers = [
-  {
-    name: "Basic",
-    price: "$24.99",
-    per: "/mo",
-    highlight: "Best for weekly washers",
-    features: [
-      "Unlimited washes",
-      "Basic tunnel package",
-      "Free vacuums",
-      "License plate recognition",
-    ],
-  },
-  {
-    name: "Plus",
-    price: "$34.99",
-    per: "/mo",
-    highlight: "Most popular",
-    featured: true,
-    features: [
-      "Everything in Basic",
-      "Ceramic protectant",
-      "Wheel + tire shine",
-      "Spot-free rinse",
-    ],
-  },
-  {
-    name: "Max",
-    price: "$44.99",
-    per: "/mo",
-    highlight: "Showroom shine",
-    features: [
-      "Everything in Plus",
-      "Graphene/ceramic top coat",
-      "Triple foam polish",
-      "Priority lane (when available)",
-    ],
   },
 ];
 
@@ -199,20 +140,17 @@ const locations = [
 const testimonials = [
   {
     name: "Jason B.",
-    quote:
-      "Fastest wash I’ve ever used—car looks brand new and the staff is awesome.",
+    quote: "Fastest wash I’ve ever used—car looks brand new and the staff is awesome.",
     rating: 5,
   },
   {
     name: "Herb P.",
-    quote:
-      "Unlimited club is a no-brainer. Spot-free finish every time. Great vacs too.",
+    quote: "Unlimited club is a no-brainer. Spot-free finish every time. Great vacs too.",
     rating: 5,
   },
   {
     name: "Alyssa R.",
-    quote:
-      "Love the community give-back focus. Clean car and a great mission.",
+    quote: "Love the community give-back focus. Clean car and a great mission.",
     rating: 5,
   },
 ];
@@ -239,7 +177,6 @@ const faqs = [
 const AUTISM_GRADIENT =
   "linear-gradient(90deg,#E40303 0%,#FF8C00 18%,#FFED00 34%,#008026 50%,#004DFF 68%,#750787 100%)";
 
-// Brand background colors (high-end deep navy)
 const INK = "#061426";
 const INK_2 = "#071b33";
 const INK_3 = "#0a2b4b";
@@ -256,7 +193,6 @@ function Logo({ variant }: { variant: "nav" | "hero" }) {
       animate={{ y: isNav ? [0, -2, 0] : [0, -6, 0] }}
       transition={{ duration: isNav ? 5.5 : 6.5, repeat: Infinity, ease: "easeInOut" }}
     >
-      {/* Autism-gradient halo rim */}
       <div
         aria-hidden="true"
         className={classNames(
@@ -271,7 +207,6 @@ function Logo({ variant }: { variant: "nav" | "hero" }) {
       />
 
       <div className={classNames("relative overflow-hidden", isNav ? "rounded-2xl" : "rounded-[2.75rem]")}>
-        {/* Subtle glossy sweep */}
         <motion.div
           aria-hidden="true"
           className={classNames(
@@ -294,7 +229,6 @@ function Logo({ variant }: { variant: "nav" | "hero" }) {
           alt={brand.name}
           className={classNames(
             "w-auto object-contain",
-            // responsive + prominent
             isNav
               ? "h-16 sm:h-20 drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
               : "w-full max-w-[20rem] sm:max-w-3xl md:max-w-5xl drop-shadow-[0_30px_90px_rgba(0,0,0,0.7)]"
@@ -328,7 +262,6 @@ function GradientButton({
       style={{ backgroundImage: AUTISM_GRADIENT }}
       {...props}
     >
-      {/* Gloss highlight */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-60"
@@ -338,7 +271,6 @@ function GradientButton({
           mixBlendMode: "soft-light",
         }}
       />
-      {/* Shimmer sweep on hover */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute -inset-y-8 -left-1/2 w-[140%] rotate-[-12deg] opacity-0 transition-opacity duration-300 group-hover:opacity-35"
@@ -461,7 +393,6 @@ function Hero() {
         }}
       />
 
-      {/* Subtle grid + noise overlay for a premium finish */}
       <div
         className="absolute inset-0 -z-10 opacity-40"
         style={{
@@ -486,7 +417,6 @@ function Hero() {
 
       <div className="mx-auto max-w-6xl px-4 py-10 text-white sm:py-20">
         <div className="relative mb-10 flex justify-center">
-          {/* Animated shine streak behind the logo */}
           <motion.div
             aria-hidden="true"
             className="pointer-events-none absolute -inset-x-24 top-1/2 h-10 -translate-y-1/2 rotate-[-8deg] blur-2xl"
@@ -527,6 +457,34 @@ function Hero() {
               {brand.tagline} Join the Unlimited Wash Club for the best value and the
               quickest way back to a spotless ride.
             </p>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    🎉 Founding Member Special
+                  </p>
+                  <p className="text-sm text-white/70">
+                    287 members joined before opening
+                  </p>
+                  <p className="text-sm text-white/70">
+                    Lock in <span className="font-semibold text-white">$10 off per month</span> for life
+                  </p>
+                </div>
+
+                <a href="/join">
+                  <button
+                    className="mt-3 rounded-2xl px-6 py-3 text-sm font-semibold text-white shadow-xl sm:mt-0"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg,#E40303,#FF8C00,#FFED00,#008026,#004DFF,#750787)",
+                    }}
+                  >
+                    Become a Founding Member
+                  </button>
+                </a>
+              </div>
+            </div>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <a href="#club">
@@ -609,12 +567,47 @@ function Hero() {
   );
 }
 
+function SpecsStrip() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-10">
+      <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur md:grid-cols-3">
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+            Tunnel Length
+          </div>
+          <div className="mt-2 text-2xl font-semibold">
+            120 Foot Express Tunnel
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+            Vacuum Stations
+          </div>
+          <div className="mt-2 text-2xl font-semibold">
+            18 Free Vacuums
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+            Membership
+          </div>
+          <div className="mt-2 text-2xl font-semibold">
+            Unlimited Wash Club
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Services() {
   return (
     <section id="services" className="mx-auto max-w-6xl px-4 py-16">
       <SectionHeader
         eyebrow="Services"
-        title="Built like the best tunnel washes — with self-serve flexibility"
+        title="Built like the best premium express tunnel washes"
         desc="Premium equipment, consistent results, and clear options for any kind of driver."
       />
 
@@ -688,99 +681,6 @@ function Services() {
             <a href="#contact" className="w-full">
               <Button className="w-full rounded-2xl">Request a fleet quote</Button>
             </a>
-          </CardFooter>
-        </Card>
-      </div>
-    </section>
-  );
-}
-
-function Club() {
-  return (
-    <section id="club" className="mx-auto max-w-6xl px-4 py-16">
-      <SectionHeader
-        eyebrow="Unlimited Wash Club"
-        title="Wash as often as you want — one simple monthly price"
-        desc="Choose a plan that fits your schedule. Upgrade or cancel anytime."
-      />
-
-      <div className="mt-10 grid gap-4 lg:grid-cols-3">
-        {clubTiers.map((t) => (
-          <Card
-            key={t.name}
-            className={classNames(
-              "rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur",
-              t.featured && "ring-1 ring-white/20"
-            )}
-          >
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl">{t.name}</CardTitle>
-                {t.featured ? (
-                  <Badge className="rounded-full text-white" style={{ backgroundImage: AUTISM_GRADIENT }}>
-                    Most popular
-                  </Badge>
-                ) : null}
-              </div>
-              <CardDescription className="text-white/70">{t.highlight}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-end gap-2">
-                <div className="text-4xl font-semibold">{t.price}</div>
-                <div className="pb-1 text-sm text-white/70">{t.per}</div>
-              </div>
-              <ul className="mt-5 grid gap-2">
-                {t.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4" />
-                    <span className="text-white/70">{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <GradientButton className="w-full rounded-2xl">Join {t.name}</GradientButton>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
-        <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Easy entry, no hassle</CardTitle>
-            <CardDescription className="text-white/70">
-              Unlimited members use license plate recognition for quick access.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-3">
-            {["Sign up", "Scan plate", "Wash anytime"].map((x, i) => (
-              <div key={x} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs text-white/70">Step {i + 1}</div>
-                <div className="mt-1 text-sm font-medium">{x}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-lg">Gift cards</CardTitle>
-            <CardDescription className="text-white/70">Perfect for teens, parents, and busy friends.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-white/70">
-              Offer digital + physical options at checkout. Add a simple redemption flow with
-              unique codes.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button
-              variant="outline"
-              className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10"
-            >
-              Buy gift cards
-            </Button>
           </CardFooter>
         </Card>
       </div>
@@ -889,8 +789,10 @@ function About() {
 
         <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-lg">What people say</CardTitle>
-            <CardDescription className="text-white/70">Swap these with real reviews once you’re live.</CardDescription>
+            <CardTitle className="text-lg">Early Supporter Feedback</CardTitle>
+            <CardDescription className="text-white/70">
+              Community reactions and preview feedback as Braxy Buns prepares to open.
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             {testimonials.slice(0, 2).map((t) => (
@@ -985,7 +887,9 @@ function Contact() {
               <Input placeholder="Subject" className="rounded-2xl" />
               <Textarea placeholder="How can we help?" required className="min-h-[120px] rounded-2xl" />
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-xs text-white/70">By submitting, you agree we may contact you about your request.</div>
+                <div className="text-xs text-white/70">
+                  By submitting, you agree we may contact you about your request.
+                </div>
                 <GradientButton className="rounded-2xl" type="submit">
                   Send message
                 </GradientButton>
@@ -1017,19 +921,18 @@ function Contact() {
                 <div>
                   <div className="text-xs text-white/70">{x.k}</div>
                   <div className="text-sm font-medium">
-  {x.k === "Phone" ? (
-    <a href="tel:7133057841" className="hover:underline">
-      {x.v}
-    </a>
-  ) : x.k === "Email" ? (
-    <a href="mailto:dennis@braxybuns.com" className="hover:underline">
-      {x.v}
-    </a>
-  ) : (
-    x.v
-  )}
-</div>
-
+                    {x.k === "Phone" ? (
+                      <a href="tel:7133057841" className="hover:underline">
+                        {x.v}
+                      </a>
+                    ) : x.k === "Email" ? (
+                      <a href="mailto:dennis@braxybuns.com" className="hover:underline">
+                        {x.v}
+                      </a>
+                    ) : (
+                      x.v
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -1114,8 +1017,9 @@ export default function BraxyBunsCarwashSite() {
       <MobileCTA />
       <main>
         <Hero />
+        <SpecsStrip />
         <Services />
-        <Club />
+        <BraxyBunsMembershipSections />
         <Locations />
         <About />
         <FAQ />
