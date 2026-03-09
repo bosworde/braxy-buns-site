@@ -89,8 +89,9 @@ const nav = [
   { label: "Services", href: "#services" },
   { label: "Unlimited Club", href: "#club" },
   { label: "Locations", href: "#locations" },
-  { label: "Founder’s Letter", href: "/founders-letter" },
-  { label: "About", href: "#about" },
+  { label: "Our Story", href: "/our-story" },
+  { label: "Inclusion", href: "/inclusion" },
+  { label: "Careers", href: "/careers" },
   { label: "FAQ", href: "#faq" },
   { label: "Contact", href: "#contact" },
 ];
