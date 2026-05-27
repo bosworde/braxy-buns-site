@@ -1,3 +1,4 @@
+
 import FounderHero from "./FounderHero";
 
 export const metadata = {
@@ -21,16 +22,13 @@ export default function FoundersLetterPage() {
       }}
     >
       <div className="mx-auto max-w-4xl px-6 py-20">
-        {/* Logo + animated halo */}
         <FounderHero />
 
-        {/* Letter Card */}
         <div className="rounded-3xl border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur">
           <p className="text-sm uppercase tracking-widest text-white/60">
             A Letter From the Founder
           </p>
 
-          {/* Gradient Divider */}
           <div
             className="my-6 h-[2px] w-full rounded-full"
             style={{ backgroundImage: AUTISM_GRADIENT }}
@@ -118,7 +116,6 @@ export default function FoundersLetterPage() {
               us through uncertainty. And that joy is one of God’s greatest gifts.
             </p>
 
-            {/* Scripture Box */}
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
               <p className="text-sm uppercase tracking-widest text-white/60">
                 Scripture
