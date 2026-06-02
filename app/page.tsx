@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -51,6 +52,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = "/braxy-buns-logo.png";
+
 const FALLBACK_LOGO =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(`
@@ -75,18 +77,21 @@ const FALLBACK_LOGO =
 
 const brand = {
   name: "Braxy Buns Carwash",
-  tagline: "Premium express tunnel wash with free vacuums. Fast, spotless, and friendly.",
+  tagline:
+    "Braxy Buns is being designed as one of the most advanced express tunnel car washes in Texas, featuring license plate recognition, smart tunnel controls, enhanced drying technology, free vacuums, and a future mobile app experience.",
   phone: "(713) 305 7841",
   email: "dennis@braxybuns.com",
   addressLine: "Fulshear, TX",
-  ctaPrimary: "Join Unlimited Wash Club",
+  ctaPrimary: "Reserve Founding Member Pricing",
   ctaSecondary: "Get Directions",
   mission:
-    "We’re building a cleaner ride and a kinder community—supporting autism programs through local partnerships and monthly give-backs.",
+    "Inspired by our son Braxton, our mission is to create meaningful employment opportunities for neurodiverse individuals while delivering an exceptional customer experience.",
 };
 
 const nav = [
   { label: "Services", href: "#services" },
+  { label: "Technology", href: "#technology" },
+  { label: "Mobile App", href: "#mobileapp" },
   { label: "Unlimited Club", href: "#club" },
   { label: "Locations", href: "#locations" },
   { label: "Our Story", href: "/our-story" },
@@ -98,16 +103,16 @@ const nav = [
 
 const services = [
   {
-    title: "Premium Tunnel Wash",
-    desc: "Soft-touch + high-pressure blend, ceramic protectant, spot-free rinse.",
+    title: "Premium 130+ Foot Tunnel Wash",
+    desc: "A premium express tunnel experience designed for improved cleaning, longer dwell time, stronger drying, shine, and speed.",
     icon: Sparkles,
-    bullets: ["Ceramic sealant option", "Wheel + tire treatment", "Spot-free finish"],
+    bullets: ["Extended dwell time", "Enhanced drying zone", "Ceramic protection"],
   },
   {
-    title: "Free Vacuum Plaza",
+    title: "18 Free Vacuum Stations",
     desc: "Powerful vacuums and detail space so every customer can finish their clean.",
     icon: Droplets,
-    bullets: ["18 vacuum stations", "High suction power", "Detail-friendly layout"],
+    bullets: ["Always free", "High suction power", "Detail-friendly layout"],
   },
   {
     title: "Fast, Safe, Consistent",
@@ -116,10 +121,10 @@ const services = [
     bullets: ["Paint-safe process", "Daily equipment checks", "Friendly attendants"],
   },
   {
-    title: "In & Out in Minutes",
-    desc: "Designed for busy schedules—with easy entry + quick lane flow.",
+    title: "LPR Enabled Membership Access",
+    desc: "Designed for busy schedules with quick lane flow and planned license plate recognition.",
     icon: Timer,
-    bullets: ["Express lane", "Clear signage", "Quick checkout"],
+    bullets: ["Fast member entry", "Contactless access", "Quick checkout"],
   },
 ];
 
@@ -128,7 +133,7 @@ const locations = [
     name: "Braxy Buns — Fulshear",
     address: "1093 Corridor (Coming Soon)",
     hours: "Mon–Sun: 7:00a–9:00p",
-    note: "Grand Opening specials + autism partnership launch.",
+    note: "Future Grand Opening specials + autism partnership launch.",
   },
   {
     name: "Future Site",
@@ -159,19 +164,23 @@ const testimonials = [
 const faqs = [
   {
     q: "How does the Unlimited Wash Club work?",
-    a: "Sign up once, then wash as often as you want. Entry uses license plate recognition (or a windshield tag) for quick access.",
+    a: "Sign up once, then wash as often as you want. Entry is planned to use license plate recognition or another membership access method for quick entry.",
+  },
+  {
+    q: "Will Braxy Buns have a mobile app?",
+    a: "Yes. The Braxy Buns mobile app is planned to allow customers to manage memberships, purchase washes, receive rewards, and access promotions.",
+  },
+  {
+    q: "What makes the Braxy Buns tunnel different?",
+    a: "Braxy Buns is planning a 130+ foot premium express tunnel with smart tunnel controls, improved dwell time, enhanced drying, and 18 free vacuum stations.",
   },
   {
     q: "Is the tunnel wash safe for my paint?",
-    a: "We use a paint-safe process with regular equipment checks and trained attendants. If you have special concerns (matte wrap, new ceramic, etc.), ask an attendant for the best option.",
-  },
-  {
-    q: "What forms of payment do you accept?",
-    a: "All major credit/debit cards are accepted. Some locations may support mobile pay.",
+    a: "We are designing the wash process around modern equipment, trained attendants, regular quality checks, and a paint-safe customer experience.",
   },
   {
     q: "How do you support autism programs?",
-    a: "We partner with local organizations for monthly give-backs and awareness events. A portion of select promotions supports autism services and community resources.",
+    a: "Braxy Buns plans to create meaningful employment opportunities for neurodiverse individuals and support local autism-focused organizations through partnerships, awareness events, and give-backs.",
   },
 ];
 
@@ -188,6 +197,7 @@ function classNames(...c: Array<string | false | null | undefined>) {
 
 function Logo({ variant }: { variant: "nav" | "hero" }) {
   const isNav = variant === "nav";
+
   return (
     <motion.div
       className={classNames("relative", isNav ? "rounded-2xl" : "rounded-[2.75rem]")}
@@ -202,8 +212,7 @@ function Logo({ variant }: { variant: "nav" | "hero" }) {
         )}
         style={{
           backgroundImage: AUTISM_GRADIENT,
-          maskImage:
-            "radial-gradient(60% 60% at 50% 50%, black 40%, transparent 82%)",
+          maskImage: "radial-gradient(60% 60% at 50% 50%, black 40%, transparent 82%)",
         }}
       />
 
@@ -253,6 +262,7 @@ function GradientButton({
       </Button>
     );
   }
+
   return (
     <Button
       className={classNames(
@@ -263,23 +273,6 @@ function GradientButton({
       style={{ backgroundImage: AUTISM_GRADIENT }}
       {...props}
     >
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          backgroundImage:
-            "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.10) 25%, transparent 55%)",
-          mixBlendMode: "soft-light",
-        }}
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-y-8 -left-1/2 w-[140%] rotate-[-12deg] opacity-0 transition-opacity duration-300 group-hover:opacity-35"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 35%, rgba(255,255,255,0.12) 60%, transparent 100%)",
-        }}
-      />
       <span className="relative z-10">{children}</span>
     </Button>
   );
@@ -289,10 +282,7 @@ function Stars({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-1" aria-label={`${rating} out of 5 stars`}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={classNames("h-4 w-4", i < rating ? "fill-current" : "opacity-30")}
-        />
+        <Star key={i} className={classNames("h-4 w-4", i < rating ? "fill-current" : "opacity-30")} />
       ))}
     </div>
   );
@@ -344,10 +334,7 @@ function TopNav() {
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10 md:hidden"
-              >
+              <Button variant="outline" className="rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10 md:hidden">
                 Menu
               </Button>
             </DialogTrigger>
@@ -358,18 +345,11 @@ function TopNav() {
               </DialogHeader>
               <div className="grid gap-2">
                 {nav.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center justify-between rounded-xl border px-4 py-3 text-sm hover:bg-accent"
-                  >
+                  <a key={item.href} href={item.href} className="flex items-center justify-between rounded-xl border px-4 py-3 text-sm hover:bg-accent">
                     {item.label}
                     <ChevronRight className="h-4 w-4" />
                   </a>
                 ))}
-                <a href="#club">
-                  <Button className="mt-2 w-full rounded-2xl">{brand.ctaPrimary}</Button>
-                </a>
               </div>
             </DialogContent>
           </Dialog>
@@ -394,51 +374,17 @@ function Hero() {
         }}
       />
 
-      <div
-        className="absolute inset-0 -z-10 opacity-40"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "72px 72px",
-          maskImage: "radial-gradient(60% 55% at 50% 35%, black 55%, transparent 100%)",
-        }}
-      />
-      <div
-        className="absolute inset-0 -z-10 opacity-[0.08]"
-        style={{
-          backgroundImage:
-            "url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%2260%22 height=%2260%22 filter=%22url(%23n)%22 opacity=%220.35%22/%3E%3C/svg%3E')",
-        }}
-      />
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -right-24 top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
-      </div>
-
       <div className="mx-auto max-w-6xl px-4 py-10 text-white sm:py-20">
         <div className="relative mb-10 flex justify-center">
-          <motion.div
-            aria-hidden="true"
-            className="pointer-events-none absolute -inset-x-24 top-1/2 h-10 -translate-y-1/2 rotate-[-8deg] blur-2xl"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.22) 45%, rgba(255,255,255,0.08) 65%, transparent 100%)",
-            }}
-            animate={{ x: ["-30%", "30%", "-30%"] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -inset-x-10 -inset-y-8 rounded-[2.25rem] opacity-80"
+            className="pointer-events-none absolute -inset-x-24 -inset-y-16 rounded-[3rem] opacity-100"
             style={{
               backgroundImage: AUTISM_GRADIENT,
-              filter: "blur(34px)",
-              maskImage: "radial-gradient(60% 50% at 50% 50%, black 40%, transparent 85%)",
+              filter: "blur(70px)",
+              maskImage: "radial-gradient(70% 60% at 50% 50%, black 45%, transparent 95%)",
             }}
           />
-
           <Logo variant="hero" />
         </div>
 
@@ -447,27 +393,30 @@ function Hero() {
             <Badge className="rounded-full bg-white/10 text-white" variant="secondary">
               Now planning near {brand.addressLine}
             </Badge>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-              <span className="inline-block bg-clip-text text-transparent" style={{ backgroundImage: AUTISM_GRADIENT }}>
-                A cleaner car in minutes
-              </span>
-              <span className="text-white"> —</span>
-              <span className="block text-white/80">with a mission behind it.</span>
-            </h1>
-            <p className="mt-4 text-base text-white/75 sm:text-lg">
-              {brand.tagline} Join the Unlimited Wash Club for the best value and the
-              quickest way back to a spotless ride.
-            </p>
 
+            <h1 className="mt-4 text-5xl font-semibold tracking-tight leading-tight sm:text-6xl">
+              <span className="block bg-clip-text text-transparent" style={{ backgroundImage: AUTISM_GRADIENT }}>
+                Premium Car Wash Technology.
+              </span>
+              <span className="mt-2 block text-white">Built for Fulshear.</span>
+              <span className="mt-2 block text-white">Powered by Purpose.</span>
+              <span className="mt-2 block text-white/80">Inspired by Braxton.</span>
+            </h1>
+
+            <p className="mt-4 text-base text-white/75 sm:text-lg">{brand.tagline}</p>
+            <p className="mt-4 text-base text-white/75 sm:text-lg">{brand.mission}</p>
+<div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+  <p className="text-center text-sm font-medium text-white">
+    Every Braxy Buns location is designed to create meaningful employment
+    opportunities for neurodiverse individuals while delivering a premium,
+    technology-driven car wash experience.
+  </p>
+</div>
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-white">
-                    🎉 Founding Member Special
-                  </p>
-                  <p className="text-sm text-white/70">
-                    287 members joined before opening
-                  </p>
+                  <p className="text-sm font-semibold text-white">🎉 Founding Member Special</p>
+                  <p className="text-sm text-white/70">Founding memberships now available</p>
                   <p className="text-sm text-white/70">
                     Lock in <span className="font-semibold text-white">$10 off per month</span> for life
                   </p>
@@ -476,10 +425,7 @@ function Hero() {
                 <a href="/join">
                   <button
                     className="mt-3 rounded-2xl px-6 py-3 text-sm font-semibold text-white shadow-xl sm:mt-0"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(90deg,#E40303,#FF8C00,#FFED00,#008026,#004DFF,#750787)",
-                    }}
+                    style={{ backgroundImage: AUTISM_GRADIENT }}
                   >
                     Become a Founding Member
                   </button>
@@ -489,17 +435,11 @@ function Hero() {
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <a href="#club">
-                <GradientButton className="group w-full rounded-2xl sm:w-auto">
-                  {brand.ctaPrimary}
-                </GradientButton>
+                <GradientButton className="group w-full rounded-2xl sm:w-auto">{brand.ctaPrimary}</GradientButton>
               </a>
-              <a href="#locations">
-                <Button
-                  variant="outline"
-                  className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10 sm:w-auto"
-                >
-                  <MapPin className="mr-2 h-4 w-4" />
-                  {brand.ctaSecondary}
+              <a href="#technology">
+                <Button variant="outline" className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10 sm:w-auto">
+                  See Our Technology
                 </Button>
               </a>
             </div>
@@ -507,21 +447,21 @@ function Hero() {
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <Sparkles className="h-4 w-4" /> Premium Wash
+                  <Sparkles className="h-4 w-4" /> Premium Technology
                 </div>
-                <p className="mt-1 text-xs text-white/70">Ceramic options + spot-free finish</p>
+                <p className="mt-1 text-xs text-white/70">Smart tunnel controls and enhanced drying</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <CreditCard className="h-4 w-4" /> Unlimited Club
+                  <CreditCard className="h-4 w-4" /> License Plate Recognition
                 </div>
-                <p className="mt-1 text-xs text-white/70">Best value for weekly+ washers</p>
+                <p className="mt-1 text-xs text-white/70">Fast, contactless member entry</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <HeartHandshake className="h-4 w-4" /> Autism Give-Back
+                  <HeartHandshake className="h-4 w-4" /> Neurodiverse Employment
                 </div>
-                <p className="mt-1 text-xs text-white/70">Local partnerships + events</p>
+                <p className="mt-1 text-xs text-white/70">Inspired by Braxton and built with purpose</p>
               </div>
             </div>
           </div>
@@ -529,16 +469,17 @@ function Hero() {
           <div className="relative">
             <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Grand Opening Specials</CardTitle>
+                <CardTitle className="text-lg">Planned Premium Features</CardTitle>
                 <CardDescription className="text-white/70">
-                  Placeholder offers — swap these for your actual promos.
+                  Built for speed, quality, convenience, and community impact.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 {[
-                  { t: "1st Month Club", b: "$10 off", d: "New members only. Cancel anytime after first month." },
-                  { t: "Free Vacuums", b: "Always", d: "High-suction bays with easy access." },
-                  { t: "Community Day", b: "Give-back", d: "A portion of proceeds supports local autism resources." },
+                  { t: "License Plate Recognition", b: "Fast Entry", d: "Contactless member recognition for shorter wait times." },
+                  { t: "Mobile App", b: "Coming Soon", d: "Manage memberships, buy washes, rewards, and promotions." },
+                  { t: "Enhanced Drying", b: "Premium Finish", d: "Longer drying zone and upgraded blower configuration." },
+                  { t: "18 Free Vacuums", b: "Always Free", d: "High-suction vacuums included with every visit." },
                 ].map((x) => (
                   <div key={x.t} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-center justify-between">
@@ -552,10 +493,7 @@ function Hero() {
               <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
                 <div className="text-xs text-white/70">Questions? Call {brand.phone}</div>
                 <a href="#contact" className="w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10 sm:w-auto"
-                  >
+                  <Button variant="outline" className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10 sm:w-auto">
                     Contact us
                   </Button>
                 </a>
@@ -573,31 +511,184 @@ function SpecsStrip() {
     <section className="mx-auto max-w-6xl px-4 py-10">
       <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur md:grid-cols-3">
         <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-white/50">
-            Tunnel Length
-          </div>
-          <div className="mt-2 text-2xl font-semibold">
-            120 Foot Express Tunnel
-          </div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/50">Tunnel Length</div>
+          <div className="mt-2 text-2xl font-semibold">130+ Foot Premium Tunnel</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/50">Vacuum Stations</div>
+          <div className="mt-2 text-2xl font-semibold">18 Free Vacuums</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/50">Membership</div>
+          <div className="mt-2 text-2xl font-semibold">LPR Enabled Membership Club</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TechnologyShowcase() {
+  const items = [
+    {
+      title: "130+ Foot Premium Tunnel",
+      desc: "Longer tunnel length allows more room for wash stages, rinse quality, drying performance, and vehicle flow.",
+    },
+    {
+      title: "Enhanced Drying Zone",
+      desc: "Extended drying space and upgraded blower placement are planned to help customers leave with a cleaner, drier vehicle.",
+    },
+    {
+      title: "Smart Tunnel Controls",
+      desc: "Modern tunnel controls are planned to improve equipment timing, chemical delivery, consistency, and uptime.",
+    },
+    {
+      title: "License Plate Recognition",
+      desc: "Fast, contactless member recognition designed to reduce friction and improve the Unlimited Wash Club experience.",
+    },
+    {
+      title: "Future Mobile App",
+      desc: "Customers will be able to manage memberships, buy washes, access promotions, and receive rewards.",
+    },
+    {
+  title: "Dual Pay Lane Design",
+  desc: "Planned entrance design optimized for faster throughput, reduced wait times, and improved customer flow."
+},
+{
+  title: "Dual Pay Lane Entry",
+  desc: "Designed to reduce wait times, improve vehicle throughput, and enhance the customer experience during peak hours.",
+},
+    {
+      title: "AI-Ready Optimization",
+      desc: "Future-ready systems designed to support smarter wash performance, monitoring, reporting, and operational decisions.",
+    },
+  ];
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-14">
+      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-white backdrop-blur">
+        <div className="mx-auto max-w-4xl text-center">
+          <Badge className="rounded-full bg-white/10 text-white" variant="secondary">
+            Premium Tunnel Design
+          </Badge>
+
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
+            Engineered for a Cleaner, Drier, Faster Wash.
+          </h2>
+
+          <p className="mt-4 text-base text-white/70 sm:text-lg">
+            Braxy Buns is planning a 130+ foot premium express tunnel designed to create a better wash sequence,
+            longer chemical dwell time, enhanced rinsing, improved drying, and faster customer throughput.
+          </p>
         </div>
 
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-white/50">
-            Vacuum Stations
-          </div>
-          <div className="mt-2 text-2xl font-semibold">
-            18 Free Vacuums
-          </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {items.map((item) => (
+            <Card key={item.title} className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-lg">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-white/70">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhyDifferent() {
+  const items = [
+    ["License Plate Recognition", "Fast, contactless member access without cards or stickers."],
+    ["Mobile App", "Membership management, rewards, promotions, and wash purchases."],
+    ["Smart Tunnel Controls", "Better wash quality, consistency, timing, and equipment performance."],
+    ["130+ Foot Premium Tunnel", "Extended wash sequence, improved dwell time, and stronger throughput."],
+    ["Enhanced Drying System", "Longer drying zone and upgraded blower configuration for a drier finish."],
+    ["Purpose-Driven Mission", "Creating meaningful jobs for neurodiverse individuals."],
+  ];
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-white backdrop-blur">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            Why Braxy Buns Is Different
+          </h2>
+          <p className="mt-3 text-white/70">
+            Braxy Buns is being designed to combine premium wash technology, superior drying performance,
+            a modern customer experience, and meaningful employment opportunities for neurodiverse individuals.
+          </p>
         </div>
 
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-white/50">
-            Membership
-          </div>
-          <div className="mt-2 text-2xl font-semibold">
-            Unlimited Wash Club
-          </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {items.map(([title, desc]) => (
+            <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <h3 className="font-semibold">{title}</h3>
+              <p className="mt-2 text-sm text-white/70">{desc}</p>
+            </div>
+          ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function Technology() {
+  const items = [
+    {
+      title: "License Plate Recognition",
+      desc: "Planned LPR technology will allow wash club members to enter quickly through contactless vehicle recognition.",
+    },
+    {
+      title: "Mobile App Integration",
+      desc: "The future Braxy Buns mobile app will allow customers to manage memberships, purchase washes, receive rewards, and access promotions.",
+    },
+    {
+      title: "Smart Tunnel Controls",
+      desc: "Smart tunnel systems are planned to improve wash timing, chemical delivery, equipment performance, and consistency.",
+    },
+    {
+      title: "130+ Foot Extended Tunnel Design",
+      desc: "Braxy Buns is planning a longer express tunnel with improved wash sequencing, better dwell time, and an enhanced drying zone.",
+    },
+    {
+      title: "Enhanced Drying System",
+      desc: "Upgraded blowers, optimized airflow, and longer drying space are planned to help deliver a cleaner, drier finish.",
+    },
+    {
+      title: "AI Tunnel Optimization",
+      desc: "Future-ready smart controls designed to optimize chemical delivery, wash quality, and drying performance.",
+    },
+    {
+      title: "Digital Membership Platform",
+      desc: "Fast enrollment, automated billing, membership management, and future app-based customer engagement.",
+    },
+    {
+      title: "18 Free Vacuums",
+      desc: "High-suction vacuum stations designed to help every customer leave with a cleaner vehicle inside and out.",
+    },
+  ];
+
+  return (
+    <section id="technology" className="mx-auto max-w-6xl px-4 py-16">
+      <SectionHeader
+        eyebrow="Technology"
+        title="Built with Smart Car Wash Technology"
+        desc="Braxy Buns is being designed to deliver a faster, smarter, and drier wash experience."
+      />
+
+      <div className="mt-10 grid gap-4 md:grid-cols-2">
+        {items.map((item) => (
+          <Card key={item.title} className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-lg">{item.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/70">{item.desc}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </section>
   );
@@ -639,51 +730,32 @@ function Services() {
           </Card>
         ))}
       </div>
+    </section>
+  );
+}
 
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
-        <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Add-ons that matter</CardTitle>
-            <CardDescription className="text-white/70">
-              Upsell without pressure: clear choices, clear benefits.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            {[
-              { title: "Ceramic Protectant", icon: Sparkles },
-              { title: "Wheel + Tire Shine", icon: ShieldCheck },
-              { title: "Spot-Free Rinse", icon: Droplets },
-              { title: "Interior Vacuums", icon: Timer },
-            ].map((x) => (
-              <div key={x.title} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/5">
-                  <x.icon className="h-4 w-4" />
-                </div>
-                <div className="text-sm font-medium">{x.title}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+function MobileApp() {
+  return (
+    <section id="mobileapp" className="mx-auto max-w-6xl px-4 py-16">
+      <SectionHeader
+        eyebrow="Mobile App"
+        title="A Better Customer Experience from Phone to Tunnel"
+        desc="The planned Braxy Buns app will support memberships, rewards, wash purchases, and future LPR integration."
+      />
 
-        <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-lg">For fleets & businesses</CardTitle>
-            <CardDescription className="text-white/70">
-              Set up volume plans for company vehicles.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-white/70">
-              We can structure monthly billing, multi-vehicle discounts, and reporting—perfect
-              for service fleets and sales teams.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <a href="#contact" className="w-full">
-              <Button className="w-full rounded-2xl">Request a fleet quote</Button>
-            </a>
-          </CardFooter>
-        </Card>
+      <div className="mt-10 grid gap-4 md:grid-cols-4">
+        {["Manage Memberships", "Buy Washes", "Rewards & Offers", "Fast Member Access"].map((title) => (
+          <Card key={title} className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-base">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/70">
+                Planned feature for the future Braxy Buns mobile app experience.
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </section>
   );
@@ -714,27 +786,12 @@ function Locations() {
             </CardContent>
             <CardFooter className="flex gap-2">
               <GradientButton className="w-full rounded-2xl">Directions</GradientButton>
-              <Button
-                variant="outline"
-                className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10"
-              >
+              <Button variant="outline" className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10">
                 Save
               </Button>
             </CardFooter>
           </Card>
         ))}
-      </div>
-
-      <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-sm font-medium">Want a location near you?</div>
-            <div className="text-sm text-white/70">Tell us your cross streets and we’ll consider it.</div>
-          </div>
-          <a href="#contact">
-            <GradientButton className="mt-3 rounded-2xl sm:mt-0">Suggest a site</GradientButton>
-          </a>
-        </div>
       </div>
     </section>
   );
@@ -744,17 +801,17 @@ function About() {
   return (
     <section id="about" className="mx-auto max-w-6xl px-4 py-16">
       <SectionHeader
-        eyebrow="About"
-        title="A premium wash that gives back"
-        desc="Modern wash quality, consistent operations, and community partnerships."
+        eyebrow="Mission"
+        title="More than a car wash"
+        desc="Braxy Buns is being built to deliver premium wash quality while creating meaningful opportunities for neurodiverse individuals."
       />
 
       <div className="mt-10 grid gap-4 lg:grid-cols-3">
         <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Our mission</CardTitle>
+            <CardTitle className="text-lg">Inspired by Braxton</CardTitle>
             <CardDescription className="text-white/70">
-              Clean cars. Better days. Stronger community support.
+              A premium wash experience with a purpose-driven heart.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -762,9 +819,9 @@ function About() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { t: "Give-back events", i: HeartHandshake, d: "Monthly partner days + awareness." },
-                { t: "Responsible process", i: Leaf, d: "Smart chemistry + water management." },
-                { t: "Quality checks", i: ShieldCheck, d: "Consistent results and care." },
+                { t: "Neurodiverse Jobs", i: HeartHandshake, d: "Meaningful employment with purpose." },
+                { t: "Responsible Process", i: Leaf, d: "Smart chemistry and water management." },
+                { t: "Quality Checks", i: ShieldCheck, d: "Consistent results and care." },
               ].map((x) => (
                 <div key={x.t} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">
@@ -775,14 +832,10 @@ function About() {
               ))}
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
-            <div className="text-xs text-white/70">Interested in partnering? Let’s talk.</div>
-            <a href="#contact">
-              <Button
-                variant="outline"
-                className="rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10"
-              >
-                Partner with us
+          <CardFooter>
+            <a href="/our-story">
+              <Button variant="outline" className="rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10">
+                Read Our Story
               </Button>
             </a>
           </CardFooter>
@@ -790,49 +843,128 @@ function About() {
 
         <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-lg">Early Supporter Feedback</CardTitle>
+           <CardTitle className="text-lg">Why Braxy Buns Matters</CardTitle>
             <CardDescription className="text-white/70">
-              Community reactions and preview feedback as Braxy Buns prepares to open.
-            </CardDescription>
+  More than a car wash. A mission-driven business built for the community.
+</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            {testimonials.slice(0, 2).map((t) => (
-              <div key={t.name} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">{t.name}</div>
-                  <Stars rating={t.rating} />
-                </div>
-                <p className="mt-2 text-sm text-white/70">“{t.quote}”</p>
-              </div>
-            ))}
-          </CardContent>
-          <CardFooter>
-            <a href="#reviews" className="w-full">
-              <GradientButton className="w-full rounded-2xl">See more reviews</GradientButton>
-            </a>
-          </CardFooter>
-        </Card>
-      </div>
+         <CardContent className="grid gap-4">
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <h4 className="font-semibold">Employment With Purpose</h4>
+    <p className="mt-2 text-sm text-white/70">
+      Braxy Buns is being designed to create meaningful employment opportunities
+      for neurodiverse individuals while delivering a premium customer experience.
+    </p>
+  </div>
 
-      <div id="reviews" className="mt-10 grid gap-4 md:grid-cols-3">
-        {testimonials.map((t) => (
-          <Card key={t.name} className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{t.name}</CardTitle>
-                <Stars rating={t.rating} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-white/70">“{t.quote}”</p>
-            </CardContent>
-          </Card>
-        ))}
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <h4 className="font-semibold">Premium Technology</h4>
+    <p className="mt-2 text-sm text-white/70">
+      Planned features include license plate recognition, smart tunnel controls,
+      enhanced drying systems, a future mobile app, and a premium tunnel design.
+    </p>
+  </div>
+
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <h4 className="font-semibold">Community Impact</h4>
+    <p className="mt-2 text-sm text-white/70">
+      Braxy Buns plans to support autism-focused organizations and become a
+      positive force within the Fulshear community.
+    </p>
+  </div>
+</CardContent>
+        </Card>
       </div>
     </section>
   );
 }
+function Roadmap() {
+  const milestones = [
+    {
+      phase: "2026",
+      items: [
+        { text: "Brand Created", complete: true },
+        { text: "LLC Formed", complete: true },
+        { text: "Trademark Filed", complete: true },
+        { text: "Website Live", complete: true },
+        { text: "Investor Materials Complete", complete: true },
+        { text: "Capital Raise Underway", complete: true },
+      ],
+    },
+    {
+      phase: "2027",
+      items: [
+        { text: "Site Selection", complete: false },
+        { text: "Permitting & Design", complete: false },
+        { text: "Construction Begins", complete: false },
+        { text: "Hiring & Training", complete: false },
+      ],
+    },
+    {
+      phase: "Grand Opening",
+      items: [
+        { text: "Launch Unlimited Wash Club", complete: false },
+        { text: "Open Braxy Buns Fulshear", complete: false },
+        { text: "Community Autism Partnership Launch", complete: false },
+      ],
+    },
+  ];
 
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-16">
+      <SectionHeader
+        eyebrow="Roadmap"
+        title="Building Braxy Buns"
+        desc="Follow our journey from concept to grand opening."
+      />
+
+      <div className="mt-10 grid gap-6 md:grid-cols-3">
+        {milestones.map((group) => (
+          <Card
+            key={group.phase}
+            className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur"
+          >
+            <CardHeader>
+              <CardTitle>{group.phase}</CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {group.items.map((item) => (
+                <div key={item.text} className="flex items-start gap-3">
+                  <div
+                    className={`mt-1 flex h-5 w-5 items-center justify-center rounded-full border ${
+                      item.complete
+                        ? "border-green-500 bg-green-500"
+                        : "border-white/30"
+                    }`}
+                  >
+                    {item.complete ? "✓" : ""}
+                  </div>
+
+                  <span className="text-sm text-white/80">
+                    {item.text}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
+        <h3 className="text-2xl font-semibold text-white">
+          Braxy Buns is Just Getting Started
+        </h3>
+
+        <p className="mt-3 text-white/70">
+          Our goal is to build one of the most advanced express tunnel car
+          washes in Texas while creating meaningful employment opportunities
+          for neurodiverse individuals and supporting autism-focused causes.
+        </p>
+      </div>
+    </section>
+  );
+}
 function FAQ() {
   return (
     <section id="faq" className="mx-auto max-w-6xl px-4 py-16">
@@ -841,11 +973,7 @@ function FAQ() {
       <div className="mx-auto mt-10 max-w-3xl">
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((f, i) => (
-            <AccordionItem
-              key={f.q}
-              value={`item-${i}`}
-              className="mb-3 rounded-2xl border border-white/10 bg-white/5 px-4 text-white"
-            >
+            <AccordionItem key={f.q} value={`item-${i}`} className="mb-3 rounded-2xl border border-white/10 bg-white/5 px-4 text-white">
               <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
               <AccordionContent className="text-sm text-white/70">{f.a}</AccordionContent>
             </AccordionItem>
@@ -887,17 +1015,12 @@ function Contact() {
               </div>
               <Input placeholder="Subject" className="rounded-2xl" />
               <Textarea placeholder="How can we help?" required className="min-h-[120px] rounded-2xl" />
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-xs text-white/70">
-                  By submitting, you agree we may contact you about your request.
-                </div>
-                <GradientButton className="rounded-2xl" type="submit">
-                  Send message
-                </GradientButton>
-              </div>
+              <GradientButton className="rounded-2xl" type="submit">
+                Send message
+              </GradientButton>
               {status === "sent" ? (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm">
-                  ✅ Message sent (demo). Connect this form to your email service.
+                  ✅ Message sent. Connect this form to your email service.
                 </div>
               ) : null}
             </form>
@@ -907,7 +1030,7 @@ function Contact() {
         <Card className="rounded-3xl border-white/10 bg-white/5 text-white backdrop-blur">
           <CardHeader>
             <CardTitle className="text-lg">Reach us</CardTitle>
-            <CardDescription className="text-white/70">Add your real business contact details.</CardDescription>
+            <CardDescription className="text-white/70">Braxy Buns Carwash</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {[
@@ -921,33 +1044,11 @@ function Contact() {
                 </div>
                 <div>
                   <div className="text-xs text-white/70">{x.k}</div>
-                  <div className="text-sm font-medium">
-                    {x.k === "Phone" ? (
-                      <a href="tel:7133057841" className="hover:underline">
-                        {x.v}
-                      </a>
-                    ) : x.k === "Email" ? (
-                      <a href="mailto:dennis@braxybuns.com" className="hover:underline">
-                        {x.v}
-                      </a>
-                    ) : (
-                      x.v
-                    )}
-                  </div>
+                  <div className="text-sm font-medium">{x.v}</div>
                 </div>
               </div>
             ))}
           </CardContent>
-          <CardFooter>
-            <a href="#locations" className="w-full">
-              <Button
-                variant="outline"
-                className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10"
-              >
-                View locations
-              </Button>
-            </a>
-          </CardFooter>
         </Card>
       </div>
     </section>
@@ -963,16 +1064,13 @@ function MobileCTA() {
             <GradientButton className="group w-full rounded-2xl">{brand.ctaPrimary}</GradientButton>
           </a>
           <a href="#contact">
-            <Button
-              variant="outline"
-              className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10"
-            >
+            <Button variant="outline" className="w-full rounded-2xl border-white/20 bg-white/5 text-white hover:bg-white/10">
               Contact
             </Button>
           </a>
         </div>
         <div className="mt-2 text-center text-[11px] text-white/70">
-          Community give-back: autism partnerships + monthly events
+          Premium wash technology + neurodiverse employment mission
         </div>
       </div>
     </div>
@@ -1019,10 +1117,15 @@ export default function BraxyBunsCarwashSite() {
       <main>
         <Hero />
         <SpecsStrip />
+        <TechnologyShowcase />
+        <WhyDifferent />
+        <Technology />
         <Services />
+        <MobileApp />
         <BraxyBunsMembershipSections />
         <Locations />
         <About />
+        <Roadmap />
         <FAQ />
         <Contact />
       </main>
