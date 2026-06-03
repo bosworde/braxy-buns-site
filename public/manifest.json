@@ -1,0 +1,16 @@
+{
+  "name": "Braxy Buns Car Wash",
+  "short_name": "Braxy Buns",
+  "description": "Premium car wash technology. Purpose-driven mission.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#061426",
+  "theme_color": "#061426",
+  "icons": [
+    {
+      "src": "/braxy-buns-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

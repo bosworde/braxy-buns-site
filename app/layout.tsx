@@ -3,36 +3,40 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://braxybuns.com"),
+  manifest: "/manifest.json",
 
   title: {
-    default: "Braxy Buns Carwash | Premium Tunnel + Self-Serve Bays",
-    template: "%s | Braxy Buns Carwash",
+    default: "Braxy Buns Car Wash | Premium Express Tunnel Technology",
+    template: "%s | Braxy Buns Car Wash",
   },
 
   description:
-    "Premium tunnel + self-serve bays in Fulshear, Texas — delivering spotless results with purpose and supporting autism awareness.",
+    "Premium express tunnel car wash in Fulshear, Texas featuring license plate recognition, smart tunnel controls, enhanced drying technology, free vacuums, and a mission-driven focus on neurodiverse employment.",
 
   keywords: [
-    "Car wash Fulshear",
-    "Braxy Buns Carwash",
-    "Premium tunnel car wash",
-    "Self serve car wash Texas",
-    "Unlimited wash club",
-    "Autism support business",
+    "Braxy Buns Car Wash",
+    "Fulshear Car Wash",
+    "Express Tunnel Car Wash",
+    "License Plate Recognition Car Wash",
+    "Unlimited Wash Club",
+    "Premium Car Wash Technology",
+    "Autism Employment Initiative",
+    "Neurodiverse Employment",
+    "Texas Car Wash",
   ],
 
   openGraph: {
-    title: "Braxy Buns Carwash | Premium Tunnel + Self-Serve Bays",
+    title: "Braxy Buns Car Wash | Premium Express Tunnel Technology",
     description:
-      "Premium tunnel + self-serve bays in Fulshear, Texas — delivering spotless results with purpose.",
+      "Braxy Buns is being designed as one of the most advanced express tunnel car washes in Texas, featuring license plate recognition, smart tunnel controls, enhanced drying technology, free vacuums, and a mission-driven focus on neurodiverse employment.",
     url: "https://braxybuns.com",
-    siteName: "Braxy Buns Carwash",
+    siteName: "Braxy Buns Car Wash",
     images: [
       {
-        url: "/og-image.jpg", // must exist in /public
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Braxy Buns Carwash",
+        alt: "Braxy Buns Car Wash",
       },
     ],
     locale: "en_US",
@@ -41,14 +45,21 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Braxy Buns Carwash | Premium Tunnel + Self-Serve Bays",
+    title: "Braxy Buns Car Wash | Premium Express Tunnel Technology",
     description:
-      "Premium tunnel + self-serve bays in Fulshear, Texas — delivering spotless results with purpose.",
+      "Premium express tunnel car wash in Fulshear, Texas featuring license plate recognition, smart tunnel controls, enhanced drying technology, free vacuums, and a mission-driven focus on neurodiverse employment.",
     images: ["/og-image.jpg"],
+  },
+
+  appleWebApp: {
+    capable: true,
+    title: "Braxy Buns",
+    statusBarStyle: "black-translucent",
   },
 
   icons: {
     icon: "/favicon.ico",
+    apple: "/braxy-buns-logo.png",
   },
 };
 
