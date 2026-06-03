@@ -91,14 +91,10 @@ const brand = {
 const nav = [
   { label: "Services", href: "#services" },
   { label: "Technology", href: "#technology" },
-  { label: "Mobile App", href: "#mobileapp" },
-  { label: "Unlimited Club", href: "#club" },
   { label: "Locations", href: "#locations" },
   { label: "Our Story", href: "/our-story" },
   { label: "Vision", href: "/vision" },
-  { label: "Inclusion", href: "/inclusion" },
   { label: "Careers", href: "/careers" },
-  { label: "FAQ", href: "#faq" },
   { label: "Contact", href: "#contact" },
 ];
 
