@@ -95,6 +95,7 @@ const nav = [
   { label: "Unlimited Club", href: "#club" },
   { label: "Locations", href: "#locations" },
   { label: "Our Story", href: "/our-story" },
+  { label: "Vision", href: "/vision" },
   { label: "Inclusion", href: "/inclusion" },
   { label: "Careers", href: "/careers" },
   { label: "FAQ", href: "#faq" },
