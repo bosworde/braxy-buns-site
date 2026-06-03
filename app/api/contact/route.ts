@@ -2,18 +2,17 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-// Use require to avoid TypeScript type issues on Vercel
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const nodemailer = require("nodemailer");
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, message } = body;
+    const { name, email, message, zip, type } = body;
 
-    if (!name || !email || !message) {
+    if (!name || !email) {
       return NextResponse.json(
-        { error: "All fields are required." },
+        { error: "Name and email are required." },
         { status: 400 }
       );
     }
@@ -28,17 +27,28 @@ export async function POST(req: Request) {
       },
     });
 
+    const isFoundingMember = type === "founding-member";
+
     await transporter.sendMail({
       from: `"Braxy Buns Website" <${process.env.EMAIL_USER}>`,
       to: "dennis@braxybuns.com",
-      subject: `New Contact Form Submission from ${name}`,
-      html: `
-        <h2>New Website Inquiry</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `,
+      subject: isFoundingMember
+        ? `New Founding Member Signup from ${name}`
+        : `New Contact Form Submission from ${name}`,
+      html: isFoundingMember
+        ? `
+          <h2>New Founding Member Signup</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>ZIP Code:</strong> ${zip || "Not provided"}</p>
+        `
+        : `
+          <h2>New Website Inquiry</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message || ""}</p>
+        `,
     });
 
     return NextResponse.json({ success: true });

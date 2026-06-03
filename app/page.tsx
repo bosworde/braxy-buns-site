@@ -91,6 +91,7 @@ const brand = {
 const nav = [
   { label: "Services", href: "#services" },
   { label: "Technology", href: "#technology" },
+  { label: "Future Location", href: "/future-location" },
   { label: "Locations", href: "#locations" },
   { label: "Our Story", href: "/our-story" },
   { label: "Vision", href: "/vision" },
@@ -100,7 +101,7 @@ const nav = [
 
 const services = [
   {
-    title: "Premium 130+ Foot Tunnel Wash",
+    title: "Premium 120+ Foot Tunnel Wash",
     desc: "A premium express tunnel experience designed for improved cleaning, longer dwell time, stronger drying, shine, and speed.",
     icon: Sparkles,
     bullets: ["Extended dwell time", "Enhanced drying zone", "Ceramic protection"],
@@ -129,8 +130,8 @@ const locations = [
   {
     name: "Braxy Buns — Fulshear",
     address: "1093 Corridor (Coming Soon)",
-    hours: "Mon–Sun: 7:00a–9:00p",
-    note: "Future Grand Opening specials + autism partnership launch.",
+    hours: "Planned hours to be announced",
+    note: "Planned flagship location with founding member offers and community partnerships.",
   },
   {
     name: "Future Site",
@@ -169,7 +170,7 @@ const faqs = [
   },
   {
     q: "What makes the Braxy Buns tunnel different?",
-    a: "Braxy Buns is planning a 130+ foot premium express tunnel with smart tunnel controls, improved dwell time, enhanced drying, and 18 free vacuum stations.",
+    a: "Braxy Buns is planning a 120+ foot premium express tunnel with smart tunnel controls, improved dwell time, enhanced drying, and 18 free vacuum stations.",
   },
   {
     q: "Is the tunnel wash safe for my paint?",
@@ -509,7 +510,7 @@ function SpecsStrip() {
       <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur md:grid-cols-3">
         <div>
           <div className="text-xs uppercase tracking-[0.2em] text-white/50">Tunnel Length</div>
-          <div className="mt-2 text-2xl font-semibold">130+ Foot Premium Tunnel</div>
+          <div className="mt-2 text-2xl font-semibold">120+ Foot Premium Tunnel</div>
         </div>
         <div>
           <div className="text-xs uppercase tracking-[0.2em] text-white/50">Vacuum Stations</div>
@@ -527,7 +528,7 @@ function SpecsStrip() {
 function TechnologyShowcase() {
   const items = [
     {
-      title: "130+ Foot Premium Tunnel",
+      title: "120+ Foot Premium Tunnel",
       desc: "Longer tunnel length allows more room for wash stages, rinse quality, drying performance, and vehicle flow.",
     },
     {
@@ -573,7 +574,7 @@ function TechnologyShowcase() {
           </h2>
 
           <p className="mt-4 text-base text-white/70 sm:text-lg">
-            Braxy Buns is planning a 130+ foot premium express tunnel designed to create a better wash sequence,
+            Braxy Buns is planning a 120+ foot premium express tunnel designed to create a better wash sequence,
             longer chemical dwell time, enhanced rinsing, improved drying, and faster customer throughput.
           </p>
         </div>
@@ -600,7 +601,7 @@ function WhyDifferent() {
     ["License Plate Recognition", "Fast, contactless member access without cards or stickers."],
     ["Mobile App", "Membership management, rewards, promotions, and wash purchases."],
     ["Smart Tunnel Controls", "Better wash quality, consistency, timing, and equipment performance."],
-    ["130+ Foot Premium Tunnel", "Extended wash sequence, improved dwell time, and stronger throughput."],
+    ["120+ Foot Premium Tunnel", "Extended wash sequence, improved dwell time, and stronger throughput."],
     ["Enhanced Drying System", "Longer drying zone and upgraded blower configuration for a drier finish."],
     ["Purpose-Driven Mission", "Creating meaningful jobs for neurodiverse individuals."],
   ];
@@ -646,7 +647,7 @@ function Technology() {
       desc: "Smart tunnel systems are planned to improve wash timing, chemical delivery, equipment performance, and consistency.",
     },
     {
-      title: "130+ Foot Extended Tunnel Design",
+      title: "120+ Foot Premium Express Tunnel",
       desc: "Braxy Buns is planning a longer express tunnel with improved wash sequencing, better dwell time, and an enhanced drying zone.",
     },
     {
@@ -763,8 +764,8 @@ function Locations() {
     <section id="locations" className="mx-auto max-w-6xl px-4 py-16">
       <SectionHeader
         eyebrow="Locations"
-        title="Find a Braxy Buns near you"
-        desc="Add your real addresses, embedded maps, and live hours here."
+        title="Our Planned Flagship Location"
+       desc="Braxy Buns is currently planning its first flagship location in the Fulshear, Texas area."
       />
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">
