@@ -1,110 +1,149 @@
-import Link from "next/link";
 import SiteShell from "@/components/SiteShell";
+import CareerInterestForm from "@/components/CareerInterestForm";
 
-const AUTISM_GRADIENT =
-  "linear-gradient(90deg,#E40303 0%,#FF8C00 18%,#FFED00 34%,#008026 50%,#004DFF 68%,#750787 100%)";
+const opportunities = [
+  {
+    title: "Customer Experience Team",
+    desc: "Friendly team members who welcome guests, help customers understand wash options, and support a positive experience.",
+  },
+  {
+    title: "Vacuum Plaza Support",
+    desc: "Team members who help keep the vacuum area clean, organized, safe, and customer-friendly.",
+  },
+  {
+    title: "Tunnel Support",
+    desc: "Operational team members who help with vehicle flow, wash quality checks, and site cleanliness.",
+  },
+  {
+    title: "Neurodiverse Employment Pathways",
+    desc: "Structured opportunities designed to help neurodiverse individuals build confidence, routine, skills, and purpose.",
+  },
+];
 
-export default function Careers() {
+const commitments = [
+  "Clear expectations and predictable routines",
+  "Supportive training and patient leadership",
+  "A positive, respectful work environment",
+  "Opportunities for neurodiverse individuals to contribute meaningfully",
+  "Team roles designed around strengths where possible",
+  "A mission-first culture inspired by Braxton",
+];
+
+export default function CareersPage() {
   return (
     <SiteShell>
-      <main className="min-h-screen">
-        <div
-          className="absolute inset-0 -z-10"
-          style={{
-            backgroundImage: `
-              radial-gradient(900px 500px at 15% 0%, rgba(227,3,3,.14), transparent 60%),
-              radial-gradient(800px 500px at 85% 10%, rgba(0,77,255,.14), transparent 60%),
-              radial-gradient(700px 500px at 50% 100%, rgba(117,7,135,.12), transparent 60%)
-            `,
-          }}
-        />
+      <main className="min-h-screen px-6 py-16 text-white">
+        <section className="mx-auto max-w-6xl">
+          <p className="text-sm uppercase tracking-[0.25em] text-white/50">
+            Careers
+          </p>
 
-        <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8">
-          <div className="mb-8">
-            <Link
-              href="/"
-              className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
-            >
-              ← Back to Home
-            </Link>
-          </div>
+          <h1 className="mt-4 text-4xl font-semibold sm:text-6xl">
+            Meaningful Employment Starts Here
+          </h1>
 
-          <div className="max-w-3xl">
-            <div
-              className="inline-flex rounded-full px-4 py-2 text-sm font-semibold text-white"
-              style={{ backgroundImage: AUTISM_GRADIENT }}
-            >
-              Careers at Braxy Buns
-            </div>
+          <p className="mt-6 max-w-4xl text-lg text-white/70">
+            Braxy Buns is being built to deliver a premium car wash experience
+            while creating meaningful employment opportunities for neurodiverse
+            individuals and team members who want to be part of something with
+            purpose.
+          </p>
 
-            <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Building a team with purpose
-            </h1>
+          <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
+            <h2 className="text-3xl font-semibold">
+              Our Employment Mission
+            </h2>
 
-            <p className="mt-6 text-lg leading-8 text-white/70">
-              Braxy Buns is building a premium express tunnel wash company with
-              a long-term commitment to inclusion, opportunity, and community impact.
+            <p className="mt-4 text-white/70">
+              Inspired by Braxton, Braxy Buns is designed around a simple belief:
+              work can create dignity, confidence, routine, purpose, and belonging.
+              We want to build a workplace where people are valued, trained,
+              supported, and given the opportunity to contribute in meaningful ways.
             </p>
           </div>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur">
-              <h2 className="text-2xl font-semibold">Our hiring vision</h2>
-              <div className="mt-6 space-y-6 text-white/70">
-                <p>
-                  As Braxy Buns grows, we want to build a workplace where team
-                  members can develop skills, gain confidence, and take pride in
-                  meaningful work.
-                </p>
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+              <h2 className="text-3xl font-semibold">
+                Neurodiverse Hiring Commitment
+              </h2>
 
-                <p>
-                  We are committed to creating employment opportunities for
-                  autistic and neurodiverse individuals and to building a culture
-                  where those employees can succeed.
-                </p>
+              <p className="mt-4 text-white/70">
+                Braxy Buns plans to create roles and training pathways that
+                support neurodiverse individuals, including individuals with
+                autism, by focusing on structure, encouragement, strengths,
+                consistency, and clear expectations.
+              </p>
 
-                <p>
-                  Over time, Braxy Buns aims to partner with local schools,
-                  autism organizations, educators, and job coaches to create
-                  supportive pathways into employment.
-                </p>
-
-                <p className="text-xl font-semibold text-white">
-                  Our long-term goal is to help create thousands of meaningful jobs
-                  for autistic and neurodiverse individuals across the United States.
-                </p>
-              </div>
+              <p className="mt-4 text-white/70">
+                Our goal is not just to create jobs, but to create a workplace
+                where team members and families can feel proud of the opportunity,
+                growth, and purpose being built.
+              </p>
             </div>
 
-            <div className="grid gap-6">
-              <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur">
-                <h3 className="text-xl font-semibold">Future roles may include</h3>
-                <div className="mt-5 space-y-3 text-sm text-white/75">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    Wash team members
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    Customer service team
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    Site leadership
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    Community partnership support
-                  </div>
-                </div>
-              </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+              <h2 className="text-3xl font-semibold">
+                What We Value
+              </h2>
 
-              <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur">
-                <h3 className="text-xl font-semibold">Interested in future opportunities?</h3>
-                <p className="mt-4 text-white/70">
-                  We’d love to hear from prospective team members, families,
-                  educators, and community partners.
-                </p>
-                <p className="mt-5 text-lg font-semibold">dennis@braxybuns.com</p>
+              <div className="mt-6 grid gap-3">
+                {commitments.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80"
+                  >
+                    {item}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+
+          <div className="mt-12">
+            <h2 className="text-3xl font-semibold">
+              Future Career Opportunities
+            </h2>
+
+            <p className="mt-3 max-w-3xl text-white/70">
+              As Braxy Buns moves toward opening, we expect to build a team
+              across customer service, site operations, vacuum plaza support,
+              tunnel support, and mission-driven employment pathways.
+            </p>
+
+            <div className="mt-8 grid gap-6 md:grid-cols-2">
+              {opportunities.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-3xl border border-white/10 bg-white/5 p-6"
+                >
+                  <h3 className="text-2xl font-semibold">{item.title}</h3>
+                  <p className="mt-3 text-white/70">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-12 rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
+            <h2 className="text-4xl font-semibold">
+              Join the Braxy Buns Hiring Interest List
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-3xl text-lg text-white/70">
+              Interested in future employment opportunities, neurodiverse hiring
+              pathways, or helping build the Braxy Buns team? Join the interest
+              list and we will keep you updated as we get closer to opening.
+            </p>
+
+            <CareerInterestForm />
+          </div>
+
+          <p className="mt-8 text-center text-xs text-white/40">
+            Braxy Buns is currently in the planning stage. Future roles,
+            hiring timelines, responsibilities, and employment opportunities are
+            subject to site selection, construction, opening timeline, and
+            operational needs.
+          </p>
         </section>
       </main>
     </SiteShell>
