@@ -74,7 +74,7 @@ export default function OurStory() {
               </h3>
 
               <p className="text-white/60 text-sm">
-                Co-Founder
+                Co-Founder & Community Impact Lead
               </p>
 
               <p className="mt-4 text-sm text-white/70">
@@ -99,7 +99,7 @@ export default function OurStory() {
               </h3>
 
               <p className="text-white/60 text-sm">
-                The Inspiration Behind Braxy Buns
+                The Inspiration Behind Our Mission
               </p>
 
               <p className="mt-4 text-sm text-white/70">
