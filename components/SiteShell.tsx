@@ -46,16 +46,16 @@ const FALLBACK_LOGO =
   </svg>
   `);
 
-const nav = [
+const navItems = [
   { label: "Home", href: "/" },
-  { label: "Unlimited Club", href: "/#club" },
+  { label: "Unlimited Club", href: "/join" },
   { label: "Our Story", href: "/our-story" },
   { label: "Inclusion", href: "/inclusion" },
+  { label: "Investors", href: "/investors" },
   { label: "Careers", href: "/careers" },
   { label: "Founder’s Letter", href: "/founders-letter" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Contact", href: "/contact" },
 ];
-
 function classNames(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
 }
@@ -114,7 +114,7 @@ function Footer() {
             </p>
           </div>
           <div className="grid gap-2 text-sm">
-            {nav.map((i) => (
+            {navItems.map((i) => (
               <Link key={i.href} href={i.href} className="text-white/70 hover:text-white">
                 {i.label}
               </Link>
@@ -148,7 +148,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
           <div className="hidden md:block">
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
-                {nav.map((item) => (
+              {navItems.map((item) => ( 
                   <NavigationMenuItem key={item.href}>
                     <NavigationMenuLink
                       href={item.href}
@@ -187,7 +187,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
                   <DialogDescription>Jump to a page.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-2">
-                  {nav.map((item) => (
+                 {navItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
