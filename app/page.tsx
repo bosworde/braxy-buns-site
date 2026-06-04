@@ -92,6 +92,7 @@ const nav = [
   { label: "Services", href: "#services" },
   { label: "Technology", href: "#technology" },
   { label: "Future Location", href: "/future-location" },
+  { label: "Investors", href: "/investors" },
   { label: "Locations", href: "#locations" },
   { label: "Our Story", href: "/our-story" },
   { label: "Vision", href: "/vision" },
