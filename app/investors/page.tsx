@@ -1,4 +1,6 @@
 import SiteShell from "@/components/SiteShell";
+import InvestorInquiryForm from "../../components/InvestorInquiryForm";
+
 
 const highlights = [
   "Premium 120+ foot express tunnel concept",
@@ -20,7 +22,7 @@ const sections = [
   },
   {
     title: "Mission + Business",
-    desc: "The brand combines modern car wash operations with a deeply personal mission inspired by Braxton, creating a story that can resonate with customers, employees, lenders, investors, and the community.",
+    desc: "The brand combines modern car wash operations with a deeply personal mission inspired by Braxton, creating a story that resonates with customers, employees, investors, and the community.",
   },
 ];
 
@@ -98,19 +100,23 @@ export default function InvestorsPage() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-3xl text-lg text-white/70">
-              To request more information, please contact Dennis directly.
+              Qualified investors, lenders, family offices, and strategic
+              partners may request additional information regarding the Braxy
+              Buns flagship project.
             </p>
-
-            <a
-              href="mailto:dennis@braxybuns.com?subject=Braxy%20Buns%20Investor%20Inquiry"
-              className="mt-8 inline-block rounded-2xl px-8 py-4 text-lg font-semibold text-white"
-              style={{
-                backgroundImage:
-                  "linear-gradient(90deg,#E40303,#FF8C00,#FFED00,#008026,#004DFF,#750787)",
-              }}
-            >
-              Contact Dennis
-            </a>
+<div className="mt-8 text-center">
+  <a
+    href="/investor-materials"
+    className="inline-block rounded-2xl px-8 py-4 font-semibold text-white"
+    style={{
+      backgroundImage:
+        "linear-gradient(90deg,#E40303,#FF8C00,#FFED00,#008026,#004DFF,#750787)",
+    }}
+  >
+    Access Investor Materials
+  </a>
+</div>
+            <InvestorInquiryForm />
           </div>
 
           <p className="mt-8 text-center text-xs text-white/40">

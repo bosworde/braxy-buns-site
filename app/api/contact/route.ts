@@ -7,7 +7,18 @@ const nodemailer = require("nodemailer");
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, message, zip, type, phone, area } = body;
+
+    const {
+      name,
+      email,
+      message,
+      zip,
+      type,
+      phone,
+      area,
+      firm,
+      investorType,
+    } = body;
 
     if (!name || !email) {
       return NextResponse.json(
@@ -18,11 +29,14 @@ export async function POST(req: Request) {
 
     const isFoundingMember = type === "founding-member";
     const isCareerInterest = type === "career-interest";
+    const isInvestorInquiry = type === "investor-inquiry";
 
     const subject = isFoundingMember
       ? `New Founding Member Signup from ${name}`
       : isCareerInterest
       ? `New Career Interest Form Submission from ${name}`
+      : isInvestorInquiry
+      ? `New Investor Inquiry from ${name}`
       : `New Contact Form Submission from ${name}`;
 
     const html = isFoundingMember
@@ -39,6 +53,17 @@ export async function POST(req: Request) {
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
         <p><strong>Area of Interest:</strong> ${area || "Not provided"}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message || ""}</p>
+      `
+      : isInvestorInquiry
+      ? `
+        <h2>New Investor Inquiry</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+        <p><strong>Firm / Company:</strong> ${firm || "Not provided"}</p>
+        <p><strong>Investor Type:</strong> ${investorType || "Not provided"}</p>
         <p><strong>Message:</strong></p>
         <p>${message || ""}</p>
       `
