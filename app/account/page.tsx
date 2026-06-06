@@ -1,185 +1,218 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import BottomNav from "@/components/BottomNav"
+import { QRCodeCanvas } from "qrcode.react"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+
+type Member = {
+  id: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  membership_plan: string | null
+  membership_status: string | null
+  vehicle_make: string | null
+  vehicle_model: string | null
+  vehicle_color: string | null
+  license_plate: string | null
+  rewards_points: number | null
+  lifetime_washes: number | null
+}
 
 export default function AccountPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("")
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [vehicleMake, setVehicleMake] = useState("")
-  const [vehicleModel, setVehicleModel] = useState("")
-  const [vehicleColor, setVehicleColor] = useState("")
-  const [licensePlate, setLicensePlate] = useState("")
+  const [member, setMember] = useState<Member | null>(null)
   const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    async function loadProfile() {
-      const { data: userData } = await supabase.auth.getUser()
-      const user = userData.user
+    const savedEmail = localStorage.getItem("braxy_member_email")
 
-      if (!user?.email) return
-
-      setEmail(user.email)
-
-      const { data: member } = await supabase
-        .from("members")
-        .select("*")
-        .eq("email", user.email)
-        .maybeSingle()
-
-      if (member) {
-        setFirstName(member.first_name || "")
-        setLastName(member.last_name || "")
-        setVehicleMake(member.vehicle_make || "")
-        setVehicleModel(member.vehicle_model || "")
-        setVehicleColor(member.vehicle_color || "")
-        setLicensePlate(member.license_plate || "")
-      }
+    if (savedEmail) {
+      setEmail(savedEmail)
+      findAccount(savedEmail)
     }
-
-    loadProfile()
   }, [])
 
-  async function saveProfile() {
-    const { error } = await supabase
+  async function findAccount(emailOverride?: string) {
+    setMessage("")
+    setMember(null)
+    setLoading(true)
+
+    const cleanEmail = (emailOverride || email).trim().toLowerCase()
+
+    if (!cleanEmail) {
+      setMessage("Enter your email address.")
+      setLoading(false)
+      return
+    }
+
+    const { data, error } = await supabase
       .from("members")
-      .update({
-        first_name: firstName,
-        last_name: lastName,
-        vehicle_make: vehicleMake,
-        vehicle_model: vehicleModel,
-        vehicle_color: vehicleColor,
-        license_plate: licensePlate,
-      })
-      .eq("email", email)
+      .select("*")
+      .eq("email", cleanEmail)
+      .maybeSingle()
+
+    setLoading(false)
 
     if (error) {
       setMessage(error.message)
       return
     }
 
-    setMessage("Profile saved successfully.")
+    if (!data) {
+      setMessage("No membership found for that email.")
+      return
+    }
+
+    localStorage.setItem("braxy_member_email", cleanEmail)
+    setEmail(cleanEmail)
+    setMember(data)
   }
 
-  async function signOut() {
-    await supabase.auth.signOut()
-    router.push("/login")
+  function logout() {
+    localStorage.removeItem("braxy_member_email")
+    setEmail("")
+    setMember(null)
+    setMessage("You have been logged out.")
   }
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-600 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-500"
+  function downloadQrCode() {
+    const canvas = document.getElementById("member-qr-code") as HTMLCanvasElement | null
+
+    if (!canvas || !member) {
+      setMessage("QR code not ready yet.")
+      return
+    }
+
+    const image = canvas.toDataURL("image/png")
+    const link = document.createElement("a")
+
+    const fileName = `${member.first_name || "braxy"}-${
+      member.last_name || "buns"
+    }-qr-pass.png`
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+
+    link.href = image
+    link.download = fileName
+    link.click()
+  }
+
+  const fullName = member
+    ? `${member.first_name || ""} ${member.last_name || ""}`.trim()
+    : ""
+
+  const vehicle = member
+    ? `${member.vehicle_color || ""} ${member.vehicle_make || ""} ${
+        member.vehicle_model || ""
+      }`.trim()
+    : ""
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-6 py-10 pb-28">
-      <div className="mx-auto max-w-2xl">
-        <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">
-          Braxy Buns Wash Club
-        </p>
+    <main className="min-h-screen bg-slate-950 p-8 text-white">
+      <h1 className="text-4xl font-bold">My Braxy Buns Pass</h1>
 
-        <h1 className="mt-4 text-4xl font-bold">My Profile</h1>
+      <p className="mt-3 max-w-xl text-slate-300">
+        Log in with your membership email to view your digital wash pass.
+      </p>
 
-        <p className="mt-2 text-slate-300">{email}</p>
-
-        <div className="mt-8 space-y-5 rounded-2xl bg-white/10 p-6">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">
-              First Name
-            </label>
-            <input
-              className={inputClass}
-              placeholder="Dennis"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">
-              Last Name
-            </label>
-            <input
-              className={inputClass}
-              placeholder="Bosworth"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">
-              Vehicle Make
-            </label>
-            <input
-              className={inputClass}
-              placeholder="Ford"
-              value={vehicleMake}
-              onChange={(e) => setVehicleMake(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">
-              Vehicle Model
-            </label>
-            <input
-              className={inputClass}
-              placeholder="F-150"
-              value={vehicleModel}
-              onChange={(e) => setVehicleModel(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">
-              Vehicle Color
-            </label>
-            <input
-              className={inputClass}
-              placeholder="Black"
-              value={vehicleColor}
-              onChange={(e) => setVehicleColor(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">
-              License Plate
-            </label>
-            <input
-              className={inputClass}
-              placeholder="ABC1234"
-              value={licensePlate}
-              onChange={(e) => setLicensePlate(e.target.value)}
-            />
-          </div>
+      {!member && (
+        <div className="mt-8 flex max-w-2xl gap-3">
+          <input
+            className="w-full rounded-xl bg-white p-4 text-slate-950"
+            placeholder="Email address..."
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
           <button
-            onClick={saveProfile}
-            className="w-full rounded-xl bg-cyan-400 py-3 font-bold text-slate-950"
+            onClick={() => findAccount()}
+            className="rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950"
           >
-            Save Profile
+            {loading ? "Loading..." : "Login"}
           </button>
-
-          <button
-            onClick={signOut}
-            className="w-full rounded-xl border border-slate-600 py-3 font-bold text-white"
-          >
-            Sign Out
-          </button>
-
-          {message && (
-            <p className="text-center font-semibold text-cyan-300">
-              {message}
-            </p>
-          )}
         </div>
-      </div>
+      )}
 
-      <BottomNav />
+      {message && <p className="mt-6 font-semibold text-cyan-300">{message}</p>}
+
+      {member && (
+        <>
+          <div className="mt-6 flex max-w-md flex-wrap gap-3">
+            <button
+              onClick={() => findAccount(member.email)}
+              className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
+            >
+              Refresh Pass
+            </button>
+
+            <button
+              onClick={downloadQrCode}
+              className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
+            >
+              Download QR
+            </button>
+
+            <button
+              onClick={logout}
+              className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
+            >
+              Log Out
+            </button>
+          </div>
+
+          <section className="mt-6 max-w-md rounded-3xl bg-white p-6 text-slate-950">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-slate-500">
+              Braxy Buns
+            </p>
+
+            <h2 className="mt-2 text-3xl font-bold">{fullName || "Member"}</h2>
+
+            <p className="mt-1 font-semibold text-cyan-700">
+              {member.membership_plan || "Prospect"}
+            </p>
+
+            <div className="mt-2 inline-block rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">
+              {member.membership_status || "inactive"}
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <QRCodeCanvas id="member-qr-code" value={member.id} size={220} />
+            </div>
+
+            <div className="mt-6 space-y-2 text-sm">
+              <p>
+                <span className="font-bold">Email:</span> {member.email}
+              </p>
+
+              <p>
+                <span className="font-bold">Plate:</span>{" "}
+                {member.license_plate || "Not added"}
+              </p>
+
+              <p>
+                <span className="font-bold">Vehicle:</span>{" "}
+                {vehicle || "Not added"}
+              </p>
+
+              <p>
+                <span className="font-bold">Braxy Bucks:</span>{" "}
+                {member.rewards_points || 0}
+              </p>
+
+              <p>
+                <span className="font-bold">Lifetime Washes:</span>{" "}
+                {member.lifetime_washes || 0}
+              </p>
+            </div>
+
+            <p className="mt-6 text-center text-xs text-slate-500">
+              Show this QR pass at the tunnel check-in.
+            </p>
+          </section>
+        </>
+      )}
     </main>
   )
 }
