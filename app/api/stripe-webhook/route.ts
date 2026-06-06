@@ -1,44 +1,25 @@
+// app/api/stripe-webhook/route.ts
+
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-import { stripe } from "@/lib/stripe"
+import { createClient } from "@supabase/supabase-js"
 
 export const runtime = "nodejs"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 
-async function supabaseRequest(path: string, options: RequestInit = {}) {
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing Supabase URL or service role key.")
-  }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+  process.env.SUPABASE_SERVICE_ROLE_KEY as string
+)
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  })
+export async function POST(req: Request) {
+  const body = await req.text()
+  const signature = req.headers.get("stripe-signature")
 
-  const text = await response.text()
-
-  if (!response.ok) {
-    throw new Error(text || `Supabase request failed with ${response.status}`)
-  }
-
-  return text ? JSON.parse(text) : null
-}
-
-export async function POST(request: Request) {
-  const body = await request.text()
-  const signature = request.headers.get("stripe-signature")
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
-  if (!signature || !webhookSecret) {
+  if (!signature) {
     return NextResponse.json(
-      { error: "Missing Stripe webhook signature or secret." },
+      { error: "Missing Stripe signature" },
       { status: 400 }
     )
   }
@@ -46,12 +27,15 @@ export async function POST(request: Request) {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (error) {
-    console.error("Stripe webhook signature error:", error)
-
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET as string
+    )
+  } catch (err: any) {
+    console.error("Stripe webhook signature error:", err.message)
     return NextResponse.json(
-      { error: "Invalid Stripe webhook signature." },
+      { error: "Invalid signature" },
       { status: 400 }
     )
   }
@@ -59,66 +43,59 @@ export async function POST(request: Request) {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session
+      const metadata = session.metadata || {}
 
-      const email = session.customer_email || session.metadata?.email || ""
-      const firstName = session.metadata?.firstName || ""
-      const lastName = session.metadata?.lastName || ""
-      const planName = session.metadata?.planName || "Max Shine Club"
-      const licensePlate = session.metadata?.licensePlate || ""
-      const vehicleMake = session.metadata?.vehicleMake || ""
-      const vehicleModel = session.metadata?.vehicleModel || ""
-      const vehicleColor = session.metadata?.vehicleColor || ""
+      const email =
+        metadata.email ||
+        session.customer_email ||
+        session.customer_details?.email ||
+        ""
 
-      if (!email) {
-        return NextResponse.json(
-          { error: "Missing customer email." },
-          { status: 400 }
-        )
-      }
+      const fullName = session.customer_details?.name || ""
 
-      const cleanEmail = email.trim().toLowerCase()
-      const cleanPlate = licensePlate.trim().toUpperCase()
+      const firstName =
+        metadata.firstName ||
+        fullName.split(" ")[0] ||
+        ""
 
-      const existingMembers = await supabaseRequest(
-        `members?select=id&or=(email.eq.${encodeURIComponent(
-          cleanEmail
-        )},license_plate.eq.${encodeURIComponent(cleanPlate)})`
-      )
+      const lastName =
+        metadata.lastName ||
+        fullName.split(" ").slice(1).join(" ") ||
+        ""
 
-      if (!existingMembers || existingMembers.length === 0) {
-        await supabaseRequest("members", {
-          method: "POST",
-          headers: {
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify({
-            first_name: firstName,
-            last_name: lastName,
-            email: cleanEmail,
-            license_plate: cleanPlate,
-            vehicle_make: vehicleMake,
-            vehicle_model: vehicleModel,
-            vehicle_color: vehicleColor,
-            membership_plan: planName,
+      const { error } = await supabase
+        .from("members")
+        .upsert(
+          {
+            email,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            membership_plan: metadata.planName || null,
+            vehicle_make: metadata.vehicleMake || null,
+            vehicle_model: metadata.vehicleModel || null,
+            vehicle_color: metadata.vehicleColor || null,
+            license_plate: metadata.licensePlate || null,
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: session.subscription as string,
             membership_status: "active",
-            rewards_points: 0,
-            lifetime_washes: 0,
-          }),
-        })
+          },
+          { onConflict: "email" }
+        )
+
+      if (error) {
+        console.error("Supabase insert error:", error)
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        )
       }
     }
 
     return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error("Webhook processing error:", error)
-
+  } catch (err: any) {
+    console.error("Webhook handler error:", err)
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown webhook processing error.",
-      },
+      { error: err.message || "Webhook failed" },
       { status: 500 }
     )
   }
