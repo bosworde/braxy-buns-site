@@ -1,14 +1,35 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-import { createClient } from "@supabase/supabase-js"
 import { stripe } from "@/lib/stripe"
 
 export const runtime = "nodejs"
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+async function supabaseRequest(path: string, options: RequestInit = {}) {
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing Supabase URL or service role key.")
+  }
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  })
+
+  const text = await response.text()
+
+  if (!response.ok) {
+    throw new Error(text || `Supabase request failed with ${response.status}`)
+  }
+
+  return text ? JSON.parse(text) : null
+}
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -35,68 +56,70 @@ export async function POST(request: Request) {
     )
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session
 
-    const email = session.customer_email || session.metadata?.email || ""
-    const firstName = session.metadata?.firstName || ""
-    const lastName = session.metadata?.lastName || ""
-    const planName = session.metadata?.planName || "Max Shine Club"
-    const licensePlate = session.metadata?.licensePlate || ""
-    const vehicleMake = session.metadata?.vehicleMake || ""
-    const vehicleModel = session.metadata?.vehicleModel || ""
-    const vehicleColor = session.metadata?.vehicleColor || ""
+      const email = session.customer_email || session.metadata?.email || ""
+      const firstName = session.metadata?.firstName || ""
+      const lastName = session.metadata?.lastName || ""
+      const planName = session.metadata?.planName || "Max Shine Club"
+      const licensePlate = session.metadata?.licensePlate || ""
+      const vehicleMake = session.metadata?.vehicleMake || ""
+      const vehicleModel = session.metadata?.vehicleModel || ""
+      const vehicleColor = session.metadata?.vehicleColor || ""
 
-    if (!email) {
-      return NextResponse.json(
-        { error: "Missing customer email." },
-        { status: 400 }
-      )
-    }
-
-    const cleanEmail = email.toLowerCase()
-    const cleanPlate = licensePlate.toUpperCase()
-
-    const { data: existingMember, error: lookupError } = await supabaseAdmin
-      .from("members")
-      .select("id")
-      .or(`email.eq.${cleanEmail},license_plate.eq.${cleanPlate}`)
-      .maybeSingle()
-
-    if (lookupError) {
-      console.error("Supabase lookup error:", lookupError)
-
-      return NextResponse.json(
-        { error: lookupError.message },
-        { status: 500 }
-      )
-    }
-
-    if (!existingMember) {
-      const { error: insertError } = await supabaseAdmin.from("members").insert({
-        first_name: firstName,
-        last_name: lastName,
-        email: cleanEmail,
-        license_plate: cleanPlate,
-        vehicle_make: vehicleMake,
-        vehicle_model: vehicleModel,
-        vehicle_color: vehicleColor,
-        membership_plan: planName,
-        membership_status: "active",
-        rewards_points: 0,
-        lifetime_washes: 0,
-      })
-
-      if (insertError) {
-        console.error("Supabase member creation error:", insertError)
-
+      if (!email) {
         return NextResponse.json(
-          { error: insertError.message },
-          { status: 500 }
+          { error: "Missing customer email." },
+          { status: 400 }
         )
       }
-    }
-  }
 
-  return NextResponse.json({ received: true })
+      const cleanEmail = email.trim().toLowerCase()
+      const cleanPlate = licensePlate.trim().toUpperCase()
+
+      const existingMembers = await supabaseRequest(
+        `members?select=id&or=(email.eq.${encodeURIComponent(
+          cleanEmail
+        )},license_plate.eq.${encodeURIComponent(cleanPlate)})`
+      )
+
+      if (!existingMembers || existingMembers.length === 0) {
+        await supabaseRequest("members", {
+          method: "POST",
+          headers: {
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            email: cleanEmail,
+            license_plate: cleanPlate,
+            vehicle_make: vehicleMake,
+            vehicle_model: vehicleModel,
+            vehicle_color: vehicleColor,
+            membership_plan: planName,
+            membership_status: "active",
+            rewards_points: 0,
+            lifetime_washes: 0,
+          }),
+        })
+      }
+    }
+
+    return NextResponse.json({ received: true })
+  } catch (error) {
+    console.error("Webhook processing error:", error)
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown webhook processing error.",
+      },
+      { status: 500 }
+    )
+  }
 }
