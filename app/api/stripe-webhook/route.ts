@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
+import { createClient } from "@supabase/supabase-js"
 import { stripe } from "@/lib/stripe"
-import { supabase } from "@/lib/supabase"
 
 export const runtime = "nodejs"
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(request: Request) {
   const body = await request.text()
   const signature = request.headers.get("stripe-signature")
-
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!signature || !webhookSecret) {
@@ -21,11 +25,7 @@ export async function POST(request: Request) {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret
-    )
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (error) {
     console.error("Stripe webhook signature error:", error)
 
@@ -38,11 +38,7 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session
 
-    const email =
-      session.customer_email ||
-      session.metadata?.email ||
-      ""
-
+    const email = session.customer_email || session.metadata?.email || ""
     const firstName = session.metadata?.firstName || ""
     const lastName = session.metadata?.lastName || ""
     const planName = session.metadata?.planName || "Max Shine Club"
@@ -61,14 +57,23 @@ export async function POST(request: Request) {
     const cleanEmail = email.toLowerCase()
     const cleanPlate = licensePlate.toUpperCase()
 
-    const { data: existingMember } = await supabase
+    const { data: existingMember, error: lookupError } = await supabaseAdmin
       .from("members")
       .select("id")
       .or(`email.eq.${cleanEmail},license_plate.eq.${cleanPlate}`)
       .maybeSingle()
 
+    if (lookupError) {
+      console.error("Supabase lookup error:", lookupError)
+
+      return NextResponse.json(
+        { error: lookupError.message },
+        { status: 500 }
+      )
+    }
+
     if (!existingMember) {
-      const { error } = await supabase.from("members").insert({
+      const { error: insertError } = await supabaseAdmin.from("members").insert({
         first_name: firstName,
         last_name: lastName,
         email: cleanEmail,
@@ -82,11 +87,11 @@ export async function POST(request: Request) {
         lifetime_washes: 0,
       })
 
-      if (error) {
-        console.error("Supabase member creation error:", error)
+      if (insertError) {
+        console.error("Supabase member creation error:", insertError)
 
         return NextResponse.json(
-          { error: "Unable to create member." },
+          { error: insertError.message },
           { status: 500 }
         )
       }
