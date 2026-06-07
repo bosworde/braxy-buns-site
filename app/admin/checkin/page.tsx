@@ -42,13 +42,13 @@ export default function AdminCheckInPage() {
       )
 
     if (isUuid) {
-      const { data } = await supabase
-        .from("members")
-        .select("*")
-        .eq("id", cleanText)
-        .maybeSingle()
+    const { data } = await supabase
+  .from("members")
+  .select("*")
+  .ilike("license_plate", plateText)
+  .limit(1)
 
-      memberData = data
+memberData = data?.[0] || null
     }
 
     if (!memberData) {
