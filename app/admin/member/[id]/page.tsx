@@ -113,31 +113,46 @@ export default function AdminMemberDetailPage() {
     setSaving(false)
   }
 
-  async function cancelMember() {
-    if (!member) return
+async function cancelMember() {
+  if (!member) return
 
-    const confirmed = window.confirm(
-      "Mark this member as cancelled? This updates Supabase only. Stripe cancellation can be added next."
-    )
+  const confirmed = window.confirm(
+    "Cancel this member's Stripe subscription and mark them cancelled?"
+  )
 
-    if (!confirmed) return
+  if (!confirmed) return
 
-    setSaving(true)
+  setSaving(true)
+  setMessage("")
 
-    const { error } = await supabase
-      .from("members")
-      .update({ membership_status: "cancelled" })
-      .eq("id", member.id)
+  try {
+    const res = await fetch("/api/cancel-subscription", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        memberId: member.id,
+        subscriptionId: member.stripe_subscription_id,
+      }),
+    })
 
-    if (error) {
-      setMessage(error.message)
-    } else {
-      setMessage("Member marked as cancelled.")
-      await loadData()
+    const data = await res.json()
+
+    if (!res.ok) {
+      setMessage(data.error || "Cancellation failed.")
+      setSaving(false)
+      return
     }
 
-    setSaving(false)
+    setMessage(data.message || "Member cancelled successfully.")
+    await loadData()
+  } catch (err: any) {
+    setMessage(err.message || "Cancellation failed.")
   }
+
+  setSaving(false)
+}
 
   if (loading) {
     return (
