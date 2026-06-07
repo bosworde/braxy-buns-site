@@ -36,20 +36,32 @@ const cleanPlate = plate.trim().toLowerCase()
       return
     }
 
-    const { data } = await supabase
-      .from("members")
-      .select("*")
-    .eq("license_plate", cleanPlate)
-      .maybeSingle()
+ const { data, error } = await supabase
+  .from("members")
+  .select("*")
+  .not("license_plate", "is", null)
 
-    setLoading(false)
+setLoading(false)
 
-    if (!data) {
-      setMessage("No member found.")
-      return
-    }
+if (error) {
+  setMessage(error.message)
+  return
+}
 
-    setMember(data)
+const matchedMember =
+  data?.find(
+    (m) =>
+      String(m.license_plate || "")
+        .replace(/\s+/g, "")
+        .toLowerCase() === cleanPlate.replace(/\s+/g, "").toLowerCase()
+  ) || null
+
+if (!matchedMember) {
+  setMessage("No member found.")
+  return
+}
+
+setMember(matchedMember)
   }
 
   async function checkInMember() {
