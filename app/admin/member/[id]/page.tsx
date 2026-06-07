@@ -18,44 +18,66 @@ type Member = {
   license_plate: string | null
   rewards_points: number | null
   lifetime_washes: number | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  created_at: string | null
 }
 
-export default function AdminMemberEditPage() {
+type WashVisit = {
+  id: string
+  created_at: string
+  email: string | null
+  membership_plan: string | null
+  license_plate: string | null
+}
+
+export default function AdminMemberDetailPage() {
   const params = useParams()
   const memberId = params.id as string
 
   const [member, setMember] = useState<Member | null>(null)
+  const [washVisits, setWashVisits] = useState<WashVisit[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
 
   useEffect(() => {
-    async function loadMember() {
-      const { data, error } = await supabase
-        .from("members")
-        .select("*")
-        .eq("id", memberId)
-        .maybeSingle()
+    if (memberId) loadData()
+  }, [memberId])
 
-      if (error) {
-        setMessage(error.message)
-      } else {
-        setMember(data)
-      }
+  async function loadData() {
+    setLoading(true)
 
+    const { data: memberData, error: memberError } = await supabase
+      .from("members")
+      .select("*")
+      .eq("id", memberId)
+      .maybeSingle()
+
+    if (memberError) {
+      setMessage(memberError.message)
       setLoading(false)
+      return
     }
 
-    if (memberId) loadMember()
-  }, [memberId])
+    setMember(memberData)
+
+    if (memberData) {
+      const { data: visits } = await supabase
+        .from("wash_visits")
+        .select("*")
+        .eq("member_id", memberData.id)
+        .order("created_at", { ascending: false })
+
+      setWashVisits(visits || [])
+    }
+
+    setLoading(false)
+  }
 
   function updateField(field: keyof Member, value: string | number) {
     if (!member) return
-
-    setMember({
-      ...member,
-      [field]: value,
-    })
+    setMember({ ...member, [field]: value })
   }
 
   async function saveMember() {
@@ -85,6 +107,33 @@ export default function AdminMemberEditPage() {
       setMessage(error.message)
     } else {
       setMessage("Member updated successfully.")
+      await loadData()
+    }
+
+    setSaving(false)
+  }
+
+  async function cancelMember() {
+    if (!member) return
+
+    const confirmed = window.confirm(
+      "Mark this member as cancelled? This updates Supabase only. Stripe cancellation can be added next."
+    )
+
+    if (!confirmed) return
+
+    setSaving(true)
+
+    const { error } = await supabase
+      .from("members")
+      .update({ membership_status: "cancelled" })
+      .eq("id", member.id)
+
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setMessage("Member marked as cancelled.")
+      await loadData()
     }
 
     setSaving(false)
@@ -109,6 +158,11 @@ export default function AdminMemberEditPage() {
     )
   }
 
+  const fullName = `${member.first_name || ""} ${member.last_name || ""}`.trim()
+  const vehicle = `${member.vehicle_color || ""} ${member.vehicle_make || ""} ${
+    member.vehicle_model || ""
+  }`.trim()
+
   return (
     <main className="min-h-screen bg-slate-950 p-10 text-white">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -116,22 +170,27 @@ export default function AdminMemberEditPage() {
           <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">
             Braxy Buns Admin
           </p>
-          <h1 className="mt-2 text-4xl font-bold">Edit Member</h1>
+          <h1 className="mt-2 text-4xl font-bold">
+            {fullName || "Member Profile"}
+          </h1>
+          <p className="mt-2 text-slate-400">{member.email}</p>
         </div>
 
         <div className="flex gap-3">
-          <Link
-            href="/admin"
-            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-          >
+          <Link href="/admin" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
             Dashboard
           </Link>
-
           <Link
             href="/admin/members"
             className="rounded-xl bg-white/10 px-5 py-3 font-bold"
           >
             Members
+          </Link>
+          <Link
+            href="/admin/checkin"
+            className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
+          >
+            Check In
           </Link>
         </div>
       </div>
@@ -142,130 +201,177 @@ export default function AdminMemberEditPage() {
         </p>
       )}
 
-      <section className="mt-8 grid max-w-5xl gap-6 md:grid-cols-2">
-        <div>
-          <label className="text-sm text-slate-400">First Name</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.first_name || ""}
-            onChange={(e) => updateField("first_name", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Last Name</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.last_name || ""}
-            onChange={(e) => updateField("last_name", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Email</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.email || ""}
-            onChange={(e) => updateField("email", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Membership Plan</label>
-          <select
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.membership_plan || "Prospect"}
-            onChange={(e) => updateField("membership_plan", e.target.value)}
-          >
-            <option>Prospect</option>
-            <option>Basic Wash Club</option>
-            <option>Plus Wash Club</option>
-            <option>Max Shine Club</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Membership Status</label>
-          <select
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.membership_status || "inactive"}
-            onChange={(e) => updateField("membership_status", e.target.value)}
-          >
-            <option value="active">active</option>
-            <option value="inactive">inactive</option>
-            <option value="cancelled">cancelled</option>
-            <option value="paused">paused</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">License Plate</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.license_plate || ""}
-            onChange={(e) => updateField("license_plate", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Vehicle Make</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.vehicle_make || ""}
-            onChange={(e) => updateField("vehicle_make", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Vehicle Model</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.vehicle_model || ""}
-            onChange={(e) => updateField("vehicle_model", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Vehicle Color</label>
-          <input
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.vehicle_color || ""}
-            onChange={(e) => updateField("vehicle_color", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Braxy Bucks</label>
-          <input
-            type="number"
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.rewards_points || 0}
-            onChange={(e) =>
-              updateField("rewards_points", Number(e.target.value))
-            }
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-400">Lifetime Washes</label>
-          <input
-            type="number"
-            className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
-            value={member.lifetime_washes || 0}
-            onChange={(e) =>
-              updateField("lifetime_washes", Number(e.target.value))
-            }
-          />
-        </div>
+      <section className="mt-8 grid gap-4 md:grid-cols-4">
+        <StatCard title="Plan" value={member.membership_plan || "—"} />
+        <StatCard title="Status" value={member.membership_status || "inactive"} />
+        <StatCard title="Braxy Bucks" value={member.rewards_points || 0} />
+        <StatCard title="Lifetime Washes" value={member.lifetime_washes || 0} />
       </section>
 
-      <button
-        onClick={saveMember}
-        disabled={saving}
-        className="mt-8 rounded-xl bg-cyan-400 px-8 py-4 font-bold text-slate-950 disabled:opacity-50"
-      >
-        {saving ? "Saving..." : "Save Changes"}
-      </button>
+      <section className="mt-8 grid gap-8 lg:grid-cols-2">
+        <div className="rounded-2xl bg-white/10 p-6">
+          <h2 className="text-2xl font-bold">Edit Member</h2>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <Input label="First Name" value={member.first_name || ""} onChange={(v) => updateField("first_name", v)} />
+            <Input label="Last Name" value={member.last_name || ""} onChange={(v) => updateField("last_name", v)} />
+            <Input label="Email" value={member.email || ""} onChange={(v) => updateField("email", v)} />
+
+            <div>
+              <label className="text-sm text-slate-400">Membership Plan</label>
+              <select
+                className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
+                value={member.membership_plan || "Prospect"}
+                onChange={(e) => updateField("membership_plan", e.target.value)}
+              >
+                <option>Prospect</option>
+                <option>Basic Wash Club</option>
+                <option>Plus Wash Club</option>
+                <option>Max Shine Club</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-400">Membership Status</label>
+              <select
+                className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
+                value={member.membership_status || "inactive"}
+                onChange={(e) => updateField("membership_status", e.target.value)}
+              >
+                <option value="active">active</option>
+                <option value="inactive">inactive</option>
+                <option value="paused">paused</option>
+                <option value="cancelled">cancelled</option>
+              </select>
+            </div>
+
+            <Input label="License Plate" value={member.license_plate || ""} onChange={(v) => updateField("license_plate", v)} />
+            <Input label="Vehicle Make" value={member.vehicle_make || ""} onChange={(v) => updateField("vehicle_make", v)} />
+            <Input label="Vehicle Model" value={member.vehicle_model || ""} onChange={(v) => updateField("vehicle_model", v)} />
+            <Input label="Vehicle Color" value={member.vehicle_color || ""} onChange={(v) => updateField("vehicle_color", v)} />
+
+            <NumberInput label="Braxy Bucks" value={member.rewards_points || 0} onChange={(v) => updateField("rewards_points", v)} />
+            <NumberInput label="Lifetime Washes" value={member.lifetime_washes || 0} onChange={(v) => updateField("lifetime_washes", v)} />
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={saveMember}
+              disabled={saving}
+              className="rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+
+            <button
+              onClick={cancelMember}
+              disabled={saving}
+              className="rounded-xl bg-red-500 px-6 py-3 font-bold text-white disabled:opacity-50"
+            >
+              Cancel Member
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-2xl bg-white/10 p-6">
+            <h2 className="text-2xl font-bold">Member Details</h2>
+
+            <div className="mt-4 space-y-3 text-sm">
+              <Detail label="Vehicle" value={vehicle || "Not added"} />
+              <Detail label="License Plate" value={member.license_plate || "Not added"} />
+              <Detail label="Member Since" value={member.created_at ? new Date(member.created_at).toLocaleDateString() : "—"} />
+              <Detail label="Stripe Customer ID" value={member.stripe_customer_id || "—"} />
+              <Detail label="Stripe Subscription ID" value={member.stripe_subscription_id || "—"} />
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white/10 p-6">
+            <h2 className="text-2xl font-bold">Wash History</h2>
+
+            {washVisits.length === 0 ? (
+              <p className="mt-4 text-slate-400">No wash visits yet.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {washVisits.slice(0, 20).map((visit) => (
+                  <div
+                    key={visit.id}
+                    className="rounded-xl bg-slate-900 p-4 text-sm"
+                  >
+                    <p className="font-bold">
+                      {new Date(visit.created_at).toLocaleString()}
+                    </p>
+                    <p className="text-slate-400">
+                      {visit.membership_plan || "—"} • {visit.license_plate || "—"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
     </main>
+  )
+}
+
+function StatCard({ title, value }: { title: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl bg-white/10 p-6">
+      <p className="text-sm text-slate-400">{title}</p>
+      <p className="mt-2 text-2xl font-bold text-cyan-300">{value}</p>
+    </div>
+  )
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div>
+      <label className="text-sm text-slate-400">{label}</label>
+      <input
+        className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  )
+}
+
+function NumberInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <div>
+      <label className="text-sm text-slate-400">{label}</label>
+      <input
+        type="number"
+        className="mt-2 w-full rounded-xl bg-white p-3 text-slate-950"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </div>
+  )
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-slate-400">{label}</p>
+      <p className="font-semibold break-all">{value}</p>
+    </div>
   )
 }
