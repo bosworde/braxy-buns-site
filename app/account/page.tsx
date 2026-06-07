@@ -17,6 +17,8 @@ type Member = {
   license_plate: string | null
   rewards_points: number | null
   lifetime_washes: number | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
 }
 
 export default function AccountPage() {
@@ -24,6 +26,7 @@ export default function AccountPage() {
   const [member, setMember] = useState<Member | null>(null)
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
+  const [billingLoading, setBillingLoading] = useState(false)
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("braxy_member_email")
@@ -78,7 +81,9 @@ export default function AccountPage() {
   }
 
   function downloadQrCode() {
-    const canvas = document.getElementById("member-qr-code") as HTMLCanvasElement | null
+    const canvas = document.getElementById(
+      "member-qr-code"
+    ) as HTMLCanvasElement | null
 
     if (!canvas || !member) {
       setMessage("QR code not ready yet.")
@@ -99,6 +104,41 @@ export default function AccountPage() {
     link.click()
   }
 
+  async function manageBilling() {
+    if (!member?.stripe_customer_id) {
+      setMessage("No Stripe customer ID found for this member.")
+      return
+    }
+
+    setBillingLoading(true)
+    setMessage("")
+
+    try {
+      const res = await fetch("/api/create-customer-portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerId: member.stripe_customer_id,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setMessage(data.error || "Could not open billing portal.")
+        setBillingLoading(false)
+        return
+      }
+
+      window.location.href = data.url
+    } catch (err: any) {
+      setMessage(err.message || "Could not open billing portal.")
+      setBillingLoading(false)
+    }
+  }
+
   const fullName = member
     ? `${member.first_name || ""} ${member.last_name || ""}`.trim()
     : ""
@@ -114,7 +154,8 @@ export default function AccountPage() {
       <h1 className="text-4xl font-bold">My Braxy Buns Pass</h1>
 
       <p className="mt-3 max-w-xl text-slate-300">
-        Log in with your membership email to view your digital wash pass.
+        Log in with your membership email to view your digital wash pass and
+        manage your billing.
       </p>
 
       {!member && (
@@ -139,7 +180,7 @@ export default function AccountPage() {
 
       {member && (
         <>
-          <div className="mt-6 flex max-w-md flex-wrap gap-3">
+          <div className="mt-6 flex max-w-3xl flex-wrap gap-3">
             <button
               onClick={() => findAccount(member.email)}
               className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
@@ -152,6 +193,14 @@ export default function AccountPage() {
               className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
             >
               Download QR
+            </button>
+
+            <button
+              onClick={manageBilling}
+              disabled={billingLoading}
+              className="rounded-xl bg-yellow-400 px-5 py-3 font-bold text-slate-950 disabled:opacity-50"
+            >
+              {billingLoading ? "Opening..." : "Manage Billing"}
             </button>
 
             <button
