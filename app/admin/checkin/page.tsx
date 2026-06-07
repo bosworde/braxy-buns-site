@@ -23,7 +23,6 @@ export default function AdminCheckInPage() {
 
   async function verifyText(text: string) {
     const cleanText = text.trim()
-    const plateText = cleanText.toLowerCase()
 
     setQrText(cleanText)
     setMessage("")
@@ -34,31 +33,47 @@ export default function AdminCheckInPage() {
       return
     }
 
-    let memberData = null
+    let memberData: any = null
 
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         cleanText
       )
 
+    // QR CODE LOOKUP
     if (isUuid) {
-    const { data } = await supabase
-  .from("members")
-  .select("*")
-  .ilike("license_plate", plateText)
-  .limit(1)
-
-memberData = data?.[0] || null
-    }
-
-    if (!memberData) {
       const { data } = await supabase
         .from("members")
         .select("*")
-        .ilike("license_plate", plateText)
+        .eq("id", cleanText)
         .maybeSingle()
 
       memberData = data
+    }
+
+    // LICENSE PLATE LOOKUP
+    if (!memberData) {
+      const normalizedPlate = cleanText
+        .replace(/\s+/g, "")
+        .toLowerCase()
+
+      const { data, error } = await supabase
+        .from("members")
+        .select("*")
+        .not("license_plate", "is", null)
+
+      if (error) {
+        setMessage(error.message)
+        return
+      }
+
+      memberData =
+        data?.find(
+          (m) =>
+            String(m.license_plate || "")
+              .replace(/\s+/g, "")
+              .toLowerCase() === normalizedPlate
+        ) || null
     }
 
     if (!memberData) {
@@ -83,8 +98,6 @@ memberData = data?.[0] || null
       plate: memberData.license_plate || "",
       status: memberData.membership_status || "inactive",
     })
-
-    setMessage("")
   }
 
   useEffect(() => {
@@ -120,8 +133,6 @@ memberData = data?.[0] || null
       return
     }
 
-    setMessage("")
-
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
 
@@ -130,8 +141,6 @@ memberData = data?.[0] || null
       .select("*")
       .eq("member_id", member.memberId)
       .gte("created_at", startOfToday.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
       .maybeSingle()
 
     if (existingVisit) {
@@ -188,20 +197,20 @@ memberData = data?.[0] || null
 
         <Link
           href="/admin/plate-lookup"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
+          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
         >
           Plate Lookup
         </Link>
 
         <Link
           href="/admin"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
+          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
         >
           Admin Dashboard
         </Link>
       </div>
 
-      <p className="mt-4 max-w-xl text-slate-300">
+      <p className="mt-4 text-slate-300">
         Scan a Braxy Buns QR pass or enter a license plate.
       </p>
 
@@ -225,7 +234,8 @@ memberData = data?.[0] || null
 
       {member && (
         <div className="mt-8 max-w-2xl rounded-2xl bg-white/10 p-6">
-          <h2 className="text-2xl font-bold">{member.name || "Member"}</h2>
+          <h2 className="text-2xl font-bold">{member.name}</h2>
+
           <p className="mt-2 text-cyan-300">{member.plan}</p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -236,19 +246,17 @@ memberData = data?.[0] || null
 
             <div>
               <p className="text-sm text-slate-400">Status</p>
-              <p className="font-bold">
-                {member.status === "active" ? "Active" : member.status}
-              </p>
+              <p>{member.status}</p>
             </div>
 
             <div>
               <p className="text-sm text-slate-400">Vehicle</p>
-              <p>{member.vehicle || "Not added"}</p>
+              <p>{member.vehicle}</p>
             </div>
 
             <div>
               <p className="text-sm text-slate-400">Plate</p>
-              <p>{member.plate || "Not added"}</p>
+              <p>{member.plate}</p>
             </div>
           </div>
 
@@ -262,7 +270,9 @@ memberData = data?.[0] || null
         </div>
       )}
 
-      {message && <p className="mt-6 font-semibold text-cyan-300">{message}</p>}
+      {message && (
+        <p className="mt-6 font-semibold text-cyan-300">{message}</p>
+      )}
     </main>
   )
 }
