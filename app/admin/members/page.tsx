@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
 type Member = {
@@ -23,32 +24,6 @@ export default function MembersAdminPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [message, setMessage] = useState("")
   const [search, setSearch] = useState("")
-const totalMembers = members.length
-
-const activeMembers = members.filter(
-  (member) => member.membership_status === "active"
-).length
-
-const totalLifetimeWashes = members.reduce(
-  (sum, member) => sum + (member.lifetime_washes || 0),
-  0
-)
-
-const totalBraxyBucks = members.reduce(
-  (sum, member) => sum + (member.rewards_points || 0),
-  0
-)
-  const filteredMembers = members.filter((member) => {
-    const searchText = search.toLowerCase()
-
-    return (
-      member.email.toLowerCase().includes(searchText) ||
-      `${member.first_name || ""} ${member.last_name || ""}`
-        .toLowerCase()
-        .includes(searchText) ||
-      (member.license_plate || "").toLowerCase().includes(searchText)
-    )
-  })
 
   useEffect(() => {
     loadMembers()
@@ -90,49 +65,85 @@ const totalBraxyBucks = members.reduce(
     await loadMembers()
   }
 
+  const totalMembers = members.length
+
+  const activeMembers = members.filter(
+    (member) => member.membership_status === "active"
+  ).length
+
+  const totalLifetimeWashes = members.reduce(
+    (sum, member) => sum + (member.lifetime_washes || 0),
+    0
+  )
+
+  const totalBraxyBucks = members.reduce(
+    (sum, member) => sum + (member.rewards_points || 0),
+    0
+  )
+
+  const filteredMembers = members.filter((member) => {
+    const searchText = search.toLowerCase()
+
+    return (
+      member.email.toLowerCase().includes(searchText) ||
+      `${member.first_name || ""} ${member.last_name || ""}`
+        .toLowerCase()
+        .includes(searchText) ||
+      (member.license_plate || "").toLowerCase().includes(searchText)
+    )
+  })
+
   return (
     <main className="min-h-screen bg-slate-950 p-10 text-white">
-      <h1 className="text-4xl font-bold">Member Management</h1>
-
-      <p className="mt-4 text-slate-300">
-        Edit membership plans, statuses, plates, and Braxy Bucks.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">
+            Braxy Buns Admin
+          </p>
+          <h1 className="mt-2 text-4xl font-bold">Member Management</h1>
+          <p className="mt-3 text-slate-300">
+            Edit membership plans, statuses, plates, and Braxy Bucks.
+          </p>
+        </div>
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-    
-        <a
+        <Link
           href="/admin"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
+          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
         >
           Dashboard
-          <a
-  href="/admin/add-member"
-  className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
->
-  Add Member
-</a>
-        </a>
+        </Link>
 
-        <a
-          href="/admin/checkin"
+        <Link
+          href="/admin/add-member"
           className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
         >
-          QR Check-In
-        </a>
+          Add Member
+        </Link>
 
-        <a
+        <Link
+          href="/admin/checkin"
+          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+        >
+          QR Check-In
+        </Link>
+
+        <Link
           href="/admin/plate-lookup"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
+          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
         >
           Plate Lookup
-        </a>
+        </Link>
       </div>
-<section className="mt-8 grid gap-4 md:grid-cols-4">
-  <KpiCard title="Total Members" value={totalMembers} />
-  <KpiCard title="Active Members" value={activeMembers} />
-  <KpiCard title="Lifetime Washes" value={totalLifetimeWashes} />
-  <KpiCard title="Braxy Bucks" value={totalBraxyBucks} />
-</section>
+
+      <section className="mt-8 grid gap-4 md:grid-cols-4">
+        <KpiCard title="Total Members" value={totalMembers} />
+        <KpiCard title="Active Members" value={activeMembers} />
+        <KpiCard title="Lifetime Washes" value={totalLifetimeWashes} />
+        <KpiCard title="Braxy Bucks" value={totalBraxyBucks} />
+      </section>
+
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl bg-white/10 p-6">
           <h2 className="mb-4 text-2xl font-bold">Members</h2>
@@ -145,24 +156,38 @@ const totalBraxyBucks = members.reduce(
           />
 
           <div className="space-y-3">
-            {filteredMembers.map((member) => (
-              <button
-                key={member.id}
-                onClick={() => setSelectedMember(member)}
-                className="w-full rounded-xl bg-slate-900 p-4 text-left hover:bg-slate-800"
-              >
-                <p className="font-bold">
-                  {member.first_name} {member.last_name}
-                </p>
+            {filteredMembers.length === 0 ? (
+              <p className="text-slate-400">No members found.</p>
+            ) : (
+              filteredMembers.map((member) => {
+                const fullName =
+                  `${member.first_name || ""} ${member.last_name || ""}`.trim() ||
+                  "Member"
 
-                <p className="text-sm text-slate-400">{member.email}</p>
+                return (
+                  <button
+                    key={member.id}
+                    onClick={() => setSelectedMember(member)}
+                    className="w-full rounded-xl bg-slate-900 p-4 text-left hover:bg-slate-800"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold">{fullName}</p>
+                        <p className="text-sm text-slate-400">{member.email}</p>
+                        <p className="text-sm text-cyan-300">
+                          {member.membership_plan || "Prospect"} •{" "}
+                          {member.membership_status || "inactive"}
+                        </p>
+                      </div>
 
-                <p className="text-sm text-cyan-300">
-                  {member.membership_plan || "Prospect"} •{" "}
-                  {member.membership_status || "inactive"}
-                </p>
-              </button>
-            ))}
+                      <p className="text-sm text-slate-400">
+                        {member.license_plate || "No plate"}
+                      </p>
+                    </div>
+                  </button>
+                )
+              })
+            )}
           </div>
         </section>
 
@@ -175,15 +200,25 @@ const totalBraxyBucks = members.reduce(
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-slate-400">Name</p>
-
                 <p className="text-xl font-bold">
                   {selectedMember.first_name} {selectedMember.last_name}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm text-slate-400">Plan</label>
+                <p className="text-sm text-slate-400">Email</p>
+                <p className="break-all">{selectedMember.email}</p>
+              </div>
 
+              <Link
+                href={`/admin/member/${selectedMember.id}`}
+                className="block w-full rounded-xl bg-cyan-400 px-6 py-3 text-center font-bold text-slate-950"
+              >
+                View Full Profile
+              </Link>
+
+              <div>
+                <label className="text-sm text-slate-400">Plan</label>
                 <select
                   className="mt-1 w-full rounded-xl bg-white p-3 text-slate-950"
                   value={selectedMember.membership_plan || "Prospect"}
@@ -195,16 +230,14 @@ const totalBraxyBucks = members.reduce(
                   }
                 >
                   <option>Prospect</option>
-                  <option>Basic Shine Club</option>
-                  <option>Plus Shine Club</option>
+                  <option>Basic Wash Club</option>
+                  <option>Plus Wash Club</option>
                   <option>Max Shine Club</option>
-                  <option>Family Plan</option>
                 </select>
               </div>
 
               <div>
                 <label className="text-sm text-slate-400">Status</label>
-
                 <select
                   className="mt-1 w-full rounded-xl bg-white p-3 text-slate-950"
                   value={selectedMember.membership_status || "inactive"}
@@ -216,36 +249,28 @@ const totalBraxyBucks = members.reduce(
                   }
                 >
                   <option value="active">active</option>
-                  <option value="frozen">frozen</option>
-                  <option value="past_due">past_due</option>
-                  <option value="cancelled">cancelled</option>
-                  <option value="prospect">prospect</option>
                   <option value="inactive">inactive</option>
+                  <option value="paused">paused</option>
+                  <option value="cancelled">cancelled</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-sm text-slate-400">
-                  License Plate
-                </label>
-
+                <label className="text-sm text-slate-400">License Plate</label>
                 <input
                   className="mt-1 w-full rounded-xl bg-white p-3 text-slate-950"
                   value={selectedMember.license_plate || ""}
                   onChange={(e) =>
                     setSelectedMember({
                       ...selectedMember,
-                      license_plate: e.target.value.toUpperCase(),
+                      license_plate: e.target.value,
                     })
                   }
                 />
               </div>
 
               <div>
-                <label className="text-sm text-slate-400">
-                  Braxy Bucks
-                </label>
-
+                <label className="text-sm text-slate-400">Braxy Bucks</label>
                 <input
                   type="number"
                   className="mt-1 w-full rounded-xl bg-white p-3 text-slate-950"
@@ -260,10 +285,7 @@ const totalBraxyBucks = members.reduce(
               </div>
 
               <div>
-                <p className="text-sm text-slate-400">
-                  Lifetime Washes
-                </p>
-
+                <p className="text-sm text-slate-400">Lifetime Washes</p>
                 <p className="text-xl font-bold">
                   {selectedMember.lifetime_washes || 0}
                 </p>
@@ -273,21 +295,19 @@ const totalBraxyBucks = members.reduce(
                 onClick={saveMember}
                 className="w-full rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950"
               >
-                Save Changes
+                Save Quick Changes
               </button>
             </div>
           )}
         </section>
       </div>
 
-      {message && (
-        <p className="mt-6 font-semibold text-cyan-300">
-          {message}
-        </p>
-      )}
+      {message && <p className="mt-6 font-semibold text-cyan-300">{message}</p>}
     </main>
   )
-}function KpiCard({ title, value }: { title: string; value: number }) {
+}
+
+function KpiCard({ title, value }: { title: string; value: number }) {
   return (
     <div className="rounded-2xl bg-white/10 p-5">
       <p className="text-sm text-slate-400">{title}</p>
