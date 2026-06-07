@@ -29,9 +29,7 @@ export default function TunnelPage() {
     setLoading(true)
     setMessage("")
     setMember(null)
-
-    const cleanPlate = plate.trim()
-
+const cleanPlate = plate.trim().toLowerCase()
     if (!cleanPlate) {
       setMessage("Enter a plate.")
       setLoading(false)
@@ -41,7 +39,7 @@ export default function TunnelPage() {
     const { data } = await supabase
       .from("members")
       .select("*")
-      .ilike("license_plate", cleanPlate)
+    .eq("license_plate", cleanPlate)
       .maybeSingle()
 
     setLoading(false)
