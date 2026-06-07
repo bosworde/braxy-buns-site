@@ -22,8 +22,10 @@ export default function AdminCheckInPage() {
   const [message, setMessage] = useState("")
 
   async function verifyText(text: string) {
-    const cleanText = text.trim().toUpperCase()
-    setQrText(cleanText)
+ const cleanText = text.trim()
+const plateText = cleanText.toUpperCase()
+
+setQrText(cleanText)
 
     let memberData = null
 
@@ -39,7 +41,7 @@ export default function AdminCheckInPage() {
       const { data: plateMatch } = await supabase
         .from("members")
         .select("*")
-        .ilike("license_plate", cleanText)
+ .ilike("license_plate", plateText)
         .maybeSingle()
 
       memberData = plateMatch
