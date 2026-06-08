@@ -61,35 +61,35 @@ export default function AdminPage() {
   const month = new Date().toISOString().slice(0, 7)
 
   const activeMembers = members.filter(
-    (m) => m.membership_status === "active"
+    (member) => member.membership_status === "active"
   )
 
   const cancelledMembers = members.filter(
-    (m) => m.membership_status === "cancelled"
+    (member) => member.membership_status === "cancelled"
   )
 
-  const newMembersThisMonth = members.filter((m) =>
-    m.created_at?.startsWith(month)
+  const newMembersThisMonth = members.filter((member) =>
+    member.created_at?.startsWith(month)
   )
 
   const basicMembers = activeMembers.filter(
-    (m) => m.membership_plan === "Basic Wash Club"
+    (member) => member.membership_plan === "Basic Wash Club"
   ).length
 
   const plusMembers = activeMembers.filter(
-    (m) => m.membership_plan === "Plus Wash Club"
+    (member) => member.membership_plan === "Plus Wash Club"
   ).length
 
   const maxMembers = activeMembers.filter(
-    (m) => m.membership_plan === "Max Shine Club"
+    (member) => member.membership_plan === "Max Shine Club"
   ).length
 
-  const todaysWashes = washVisits.filter((v) =>
-    v.created_at?.startsWith(today)
+  const todaysWashes = washVisits.filter((visit) =>
+    visit.created_at?.startsWith(today)
   )
 
-  const monthlyWashes = washVisits.filter((v) =>
-    v.created_at?.startsWith(month)
+  const monthlyWashes = washVisits.filter((visit) =>
+    visit.created_at?.startsWith(month)
   )
 
   const totalRewardsPoints = members.reduce(
@@ -97,18 +97,18 @@ export default function AdminPage() {
     0
   )
 
-  const lifetimeWashes = members.reduce(
-    (sum, member) => sum + (member.lifetime_washes || 0),
-    0
-  )
+  const lifetimeWashes = washVisits.length
 
   const estimatedMRR =
     basicMembers * 24.99 + plusMembers * 34.99 + maxMembers * 44.99
 
   const annualRunRate = estimatedMRR * 12
 
-  const averageWashesPerMember =
+  const averageMonthlyWashesPerMember =
     activeMembers.length > 0 ? monthlyWashes.length / activeMembers.length : 0
+
+  const averageLifetimeWashesPerMember =
+    activeMembers.length > 0 ? washVisits.length / activeMembers.length : 0
 
   const topMembers = [...members]
     .sort((a, b) => (b.lifetime_washes || 0) - (a.lifetime_washes || 0))
@@ -139,26 +139,45 @@ export default function AdminPage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Link href="/admin/tunnel" className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950">
+          <Link
+            href="/admin/tunnel"
+            className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
+          >
             Tunnel Screen
           </Link>
-          <Link href="/admin/leads" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
-  Founding Member CRM
-</Link>
 
-          <Link href="/admin/checkin" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+          <Link
+            href="/admin/leads"
+            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+          >
+            Founding Member CRM
+          </Link>
+
+          <Link
+            href="/admin/checkin"
+            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+          >
             QR Check-In
           </Link>
 
-          <Link href="/admin/members" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+          <Link
+            href="/admin/members"
+            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+          >
             Manage Members
           </Link>
 
-          <Link href="/admin/add-member" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+          <Link
+            href="/admin/add-member"
+            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+          >
             Add Member
           </Link>
 
-          <Link href="/admin/plate-lookup" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+          <Link
+            href="/admin/plate-lookup"
+            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+          >
             Plate Lookup
           </Link>
         </div>
@@ -171,13 +190,25 @@ export default function AdminPage() {
           <>
             <section className="grid gap-4 md:grid-cols-4">
               <StatCard title="Active Members" value={activeMembers.length} />
-              <StatCard title="Estimated MRR" value={`$${estimatedMRR.toFixed(2)}`} />
-              <StatCard title="Annual Run Rate" value={`$${annualRunRate.toFixed(0)}`} />
+              <StatCard
+                title="Estimated MRR"
+                value={`$${estimatedMRR.toFixed(2)}`}
+              />
+              <StatCard
+                title="Annual Run Rate"
+                value={`$${annualRunRate.toFixed(0)}`}
+              />
               <StatCard title="Today's Washes" value={todaysWashes.length} />
 
               <StatCard title="Total Members" value={members.length} />
-              <StatCard title="New Members This Month" value={newMembersThisMonth.length} />
-              <StatCard title="Cancelled Members" value={cancelledMembers.length} />
+              <StatCard
+                title="New Members This Month"
+                value={newMembersThisMonth.length}
+              />
+              <StatCard
+                title="Cancelled Members"
+                value={cancelledMembers.length}
+              />
               <StatCard title="This Month's Washes" value={monthlyWashes.length} />
 
               <StatCard title="Basic Members" value={basicMembers} />
@@ -188,7 +219,11 @@ export default function AdminPage() {
               <StatCard title="Lifetime Washes" value={lifetimeWashes} />
               <StatCard
                 title="Avg Monthly Washes / Member"
-                value={averageWashesPerMember.toFixed(1)}
+                value={averageMonthlyWashesPerMember.toFixed(1)}
+              />
+              <StatCard
+                title="Avg Lifetime Washes / Member"
+                value={averageLifetimeWashesPerMember.toFixed(1)}
               />
               <StatCard
                 title="Revenue / Wash This Month"
@@ -198,10 +233,8 @@ export default function AdminPage() {
                     : "$0.00"
                 }
               />
-              <StatCard
-                title="Founding Members"
-                value={`${members.length}/500`}
-              />
+
+              <StatCard title="Founding Members" value={`${members.length}/500`} />
             </section>
 
             <section className="grid gap-6 lg:grid-cols-2">
@@ -209,9 +242,21 @@ export default function AdminPage() {
                 <h2 className="text-2xl font-bold">Plan Mix</h2>
 
                 <div className="mt-6 space-y-4">
-                  <PlanBar label="Basic Wash Club" count={basicMembers} total={activeMembers.length} />
-                  <PlanBar label="Plus Wash Club" count={plusMembers} total={activeMembers.length} />
-                  <PlanBar label="Max Shine Club" count={maxMembers} total={activeMembers.length} />
+                  <PlanBar
+                    label="Basic Wash Club"
+                    count={basicMembers}
+                    total={activeMembers.length}
+                  />
+                  <PlanBar
+                    label="Plus Wash Club"
+                    count={plusMembers}
+                    total={activeMembers.length}
+                  />
+                  <PlanBar
+                    label="Max Shine Club"
+                    count={maxMembers}
+                    total={activeMembers.length}
+                  />
                 </div>
               </div>
 
@@ -241,6 +286,7 @@ export default function AdminPage() {
                                 {member.license_plate || "No plate"}
                               </p>
                             </div>
+
                             <p className="text-xl font-bold text-cyan-300">
                               {member.lifetime_washes || 0}
                             </p>
@@ -277,8 +323,12 @@ export default function AdminPage() {
                             {new Date(visit.created_at).toLocaleTimeString()}
                           </td>
                           <td className="py-3 pr-4">{visit.email || "—"}</td>
-                          <td className="py-3 pr-4">{visit.membership_plan || "—"}</td>
-                          <td className="py-3 pr-4">{visit.license_plate || "—"}</td>
+                          <td className="py-3 pr-4">
+                            {visit.membership_plan || "—"}
+                          </td>
+                          <td className="py-3 pr-4">
+                            {visit.license_plate || "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -313,9 +363,15 @@ export default function AdminPage() {
                         <tr key={member.id} className="border-b border-white/10">
                           <td className="py-3 pr-4">{fullName}</td>
                           <td className="py-3 pr-4">{member.email}</td>
-                          <td className="py-3 pr-4">{member.membership_plan || "—"}</td>
-                          <td className="py-3 pr-4">{member.membership_status || "inactive"}</td>
-                          <td className="py-3 pr-4">{member.license_plate || "—"}</td>
+                          <td className="py-3 pr-4">
+                            {member.membership_plan || "—"}
+                          </td>
+                          <td className="py-3 pr-4">
+                            {member.membership_status || "inactive"}
+                          </td>
+                          <td className="py-3 pr-4">
+                            {member.license_plate || "—"}
+                          </td>
                           <td className="py-3 pr-4">
                             <Link
                               href={`/admin/member/${member.id}`}
