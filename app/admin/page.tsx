@@ -142,6 +142,9 @@ export default function AdminPage() {
           <Link href="/admin/tunnel" className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950">
             Tunnel Screen
           </Link>
+          <Link href="/admin/leads" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+  Founding Member CRM
+</Link>
 
           <Link href="/admin/checkin" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
             QR Check-In
