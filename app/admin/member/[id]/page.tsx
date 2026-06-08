@@ -125,11 +125,17 @@ export default function AdminMemberDetailPage() {
       .eq("id", member.id)
 
     if (error) {
-      setMessage(error.message)
-    } else {
-      setMessage("Member updated successfully.")
-      await loadData()
-    }
+  if (error.message.includes("unique_member_license_plate")) {
+    setMessage(
+      "That license plate is already assigned to another member."
+    )
+  } else {
+    setMessage(error.message)
+  }
+} else {
+  setMessage("Member updated successfully.")
+  await loadData()
+}
 
     setSaving(false)
   }
