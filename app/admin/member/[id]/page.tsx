@@ -80,6 +80,27 @@ export default function AdminMemberDetailPage() {
     setMember({ ...member, [field]: value })
   }
 
+  async function updateMemberStatus(status: string) {
+    if (!member) return
+
+    setSaving(true)
+    setMessage("")
+
+    const { error } = await supabase
+      .from("members")
+      .update({ membership_status: status })
+      .eq("id", member.id)
+
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setMessage(`Member marked ${status}.`)
+      await loadData()
+    }
+
+    setSaving(false)
+  }
+
   async function saveMember() {
     if (!member) return
 
@@ -113,46 +134,46 @@ export default function AdminMemberDetailPage() {
     setSaving(false)
   }
 
-async function cancelMember() {
-  if (!member) return
+  async function cancelMember() {
+    if (!member) return
 
-  const confirmed = window.confirm(
-    "Cancel this member's Stripe subscription and mark them cancelled?"
-  )
+    const confirmed = window.confirm(
+      "Cancel this member's Stripe subscription and mark them cancelled?"
+    )
 
-  if (!confirmed) return
+    if (!confirmed) return
 
-  setSaving(true)
-  setMessage("")
+    setSaving(true)
+    setMessage("")
 
-  try {
-    const res = await fetch("/api/cancel-subscription", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        memberId: member.id,
-        subscriptionId: member.stripe_subscription_id,
-      }),
-    })
+    try {
+      const res = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memberId: member.id,
+          subscriptionId: member.stripe_subscription_id,
+        }),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (!res.ok) {
-      setMessage(data.error || "Cancellation failed.")
-      setSaving(false)
-      return
+      if (!res.ok) {
+        setMessage(data.error || "Cancellation failed.")
+        setSaving(false)
+        return
+      }
+
+      setMessage(data.message || "Member cancelled successfully.")
+      await loadData()
+    } catch (err: any) {
+      setMessage(err.message || "Cancellation failed.")
     }
 
-    setMessage(data.message || "Member cancelled successfully.")
-    await loadData()
-  } catch (err: any) {
-    setMessage(err.message || "Cancellation failed.")
+    setSaving(false)
   }
-
-  setSaving(false)
-}
 
   if (loading) {
     return (
@@ -195,16 +216,10 @@ async function cancelMember() {
           <Link href="/admin" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
             Dashboard
           </Link>
-          <Link
-            href="/admin/members"
-            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-          >
+          <Link href="/admin/members" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
             Members
           </Link>
-          <Link
-            href="/admin/checkin"
-            className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
-          >
+          <Link href="/admin/checkin" className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950">
             Check In
           </Link>
         </div>
@@ -279,6 +294,22 @@ async function cancelMember() {
             </button>
 
             <button
+              onClick={() => updateMemberStatus("paused")}
+              disabled={saving}
+              className="rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-950 disabled:opacity-50"
+            >
+              Pause Member
+            </button>
+
+            <button
+              onClick={() => updateMemberStatus("active")}
+              disabled={saving}
+              className="rounded-xl bg-green-500 px-6 py-3 font-bold text-white disabled:opacity-50"
+            >
+              Reactivate Member
+            </button>
+
+            <button
               onClick={cancelMember}
               disabled={saving}
               className="rounded-xl bg-red-500 px-6 py-3 font-bold text-white disabled:opacity-50"
@@ -309,10 +340,7 @@ async function cancelMember() {
             ) : (
               <div className="mt-4 space-y-3">
                 {washVisits.slice(0, 20).map((visit) => (
-                  <div
-                    key={visit.id}
-                    className="rounded-xl bg-slate-900 p-4 text-sm"
-                  >
+                  <div key={visit.id} className="rounded-xl bg-slate-900 p-4 text-sm">
                     <p className="font-bold">
                       {new Date(visit.created_at).toLocaleString()}
                     </p>
