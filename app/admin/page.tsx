@@ -181,6 +181,12 @@ export default function AdminPage() {
             Plate Lookup
           </Link>
         </div>
+        <Link
+  href="/admin/welcome"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Welcome Screen
+</Link>
 
         {loading ? (
           <div className="rounded-2xl bg-white/10 p-8 text-slate-300">
