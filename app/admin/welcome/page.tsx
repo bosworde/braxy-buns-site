@@ -89,7 +89,20 @@ const tierCardClass =
     : member?.membership_plan === "Plus Wash Club"
     ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
     : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
-      const tierBackgroundClass =
+   const tierCardClass =
+  member?.membership_plan === "Basic Wash Club"
+    ? "bg-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]"
+    : member?.membership_plan === "Plus Wash Club"
+    ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
+    : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
+    const tierCardClass =
+  member?.membership_plan === "Basic Wash Club"
+    ? "bg-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]"
+    : member?.membership_plan === "Plus Wash Club"
+    ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
+    : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
+
+const tierBackgroundClass =
   member?.membership_plan === "Basic Wash Club"
     ? "from-emerald-900 via-slate-950 to-emerald-950"
     : member?.membership_plan === "Plus Wash Club"
@@ -166,14 +179,19 @@ const tierCardClass =
                 <Image
                   src={tierImage}
                   alt={tierName}
-                width={280}
-height={280}
-                  className="rounded-3xl drop-shadow-[0_0_25px_rgba(255,255,255,0.35)]"
+                width={380}
+height={380}
+                className="rounded-3xl drop-shadow-[0_0_45px_rgba(253,224,71,0.95)]"
                   priority
                 />
 
                 <div>
                   <p className="text-6xl font-black">{tierName}</p>
+                  {member?.membership_plan === "Max Shine Club" && (
+  <div className="mt-3 inline-flex items-center rounded-full bg-slate-950 px-6 py-2 text-lg font-black uppercase tracking-[0.2em] text-yellow-300">
+    ★ VIP PRIORITY MEMBER
+  </div>
+)}
 
                   <p className="mt-2 text-2xl font-black uppercase tracking-[0.3em]">
                     {tierSubtitle}
