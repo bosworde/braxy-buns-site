@@ -16,27 +16,45 @@ export default function AdminGuard({
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
+    const checkAdmin = async () => {
+      setChecking(true)
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const user = session?.user
+
+      if (!user) {
+        setChecking(false)
+        router.replace("/login")
+        return
+      }
+
+      const email = user.email?.toLowerCase() || ""
+
+      if (!ADMIN_EMAILS.includes(email)) {
+        setChecking(false)
+        router.replace("/dashboard")
+        return
+      }
+
+      setAllowed(true)
+      setChecking(false)
+    }
+
     checkAdmin()
-  }, [])
 
-  async function checkAdmin() {
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      checkAdmin()
+    })
 
-    if (!user) {
-      router.push("/login")
-      return
+    return () => {
+      subscription.unsubscribe()
     }
-
-    if (!ADMIN_EMAILS.includes(user.email || "")) {
-      router.push("/dashboard")
-      return
-    }
-
-    setAllowed(true)
-    setChecking(false)
-  }
+  }, [router])
 
   if (checking) {
     return (
