@@ -6,9 +6,9 @@ import { supabase } from "@/lib/supabase"
 
 type Member = {
   id: string
+  email: string
   first_name: string | null
   last_name: string | null
-  email: string
   membership_plan: string | null
   membership_status: string | null
   vehicle_make: string | null
@@ -24,193 +24,295 @@ export default function TunnelPage() {
   const [member, setMember] = useState<Member | null>(null)
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
+  const [checkedIn, setCheckedIn] = useState(false)
 
   async function lookupPlate() {
     setLoading(true)
     setMessage("")
     setMember(null)
-const cleanPlate = plate.trim().toLowerCase()
+    setCheckedIn(false)
+
+    const cleanPlate = plate.trim().toUpperCase()
+
     if (!cleanPlate) {
-      setMessage("Enter a plate.")
+      setMessage("Enter a license plate.")
       setLoading(false)
       return
     }
 
- const { data, error } = await supabase
-  .from("members")
-  .select("*")
-  .not("license_plate", "is", null)
-
-setLoading(false)
-
-if (error) {
-  setMessage(error.message)
-  return
-}
-
-const matchedMember =
-  data?.find(
-    (m) =>
-      String(m.license_plate || "")
-        .replace(/\s+/g, "")
-        .toLowerCase() === cleanPlate.replace(/\s+/g, "").toLowerCase()
-  ) || null
-
-if (!matchedMember) {
-  setMessage("No member found.")
-  return
-}
-
-setMember(matchedMember)
-  }
-
-  async function checkInMember() {
-    if (!member) return
-
-    if (member.membership_status !== "active") {
-      setMessage("Membership is not active.")
-      return
-    }
-
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-
-    const { data: existingVisit } = await supabase
-      .from("wash_visits")
+    const { data, error } = await supabase
+      .from("members")
       .select("*")
-      .eq("member_id", member.id)
-      .gte("created_at", startOfToday.toISOString())
+      .eq("license_plate", cleanPlate)
       .maybeSingle()
-
-    if (existingVisit) {
-      setMessage("Already checked in today.")
-      return
-    }
-
-    const { error } = await supabase
-      .from("wash_visits")
-      .insert({
-        member_id: member.id,
-        email: member.email,
-        membership_plan: member.membership_plan,
-        license_plate: member.license_plate,
-      })
 
     if (error) {
       setMessage(error.message)
+      setLoading(false)
       return
     }
 
-    await supabase
+    if (!data) {
+      setMessage("No member found for that plate.")
+      setLoading(false)
+      return
+    }
+
+    setMember(data)
+    setLoading(false)
+  }
+
+  async function startWash() {
+    if (!member) return
+
+    setLoading(true)
+    setMessage("")
+
+    if (member.membership_status !== "active") {
+      setMessage("Membership is not active.")
+      setLoading(false)
+      return
+    }
+
+    const today = new Date().toISOString().slice(0, 10)
+
+    const { data: existingWash, error: existingError } = await supabase
+      .from("wash_visits")
+      .select("id")
+      .eq("member_id", member.id)
+      .gte("created_at", `${today}T00:00:00`)
+      .lte("created_at", `${today}T23:59:59`)
+      .maybeSingle()
+
+    if (existingError) {
+      setMessage(existingError.message)
+      setLoading(false)
+      return
+    }
+
+    if (existingWash) {
+      setMessage("This member already washed today.")
+      setLoading(false)
+      return
+    }
+
+    const { error: visitError } = await supabase.from("wash_visits").insert({
+      member_id: member.id,
+      email: member.email,
+      membership_plan: member.membership_plan,
+      license_plate: member.license_plate,
+    })
+
+    if (visitError) {
+      setMessage(visitError.message)
+      setLoading(false)
+      return
+    }
+
+    const newPoints = (member.rewards_points || 0) + 10
+    const newWashes = (member.lifetime_washes || 0) + 1
+
+    const { error: updateError } = await supabase
       .from("members")
       .update({
-        rewards_points: (member.rewards_points || 0) + 10,
-        lifetime_washes: (member.lifetime_washes || 0) + 1,
+        rewards_points: newPoints,
+        lifetime_washes: newWashes,
       })
       .eq("id", member.id)
 
-    setMessage("Wash checked in successfully.")
+    if (updateError) {
+      setMessage(updateError.message)
+      setLoading(false)
+      return
+    }
+
+    const { error: welcomeError } = await supabase
+      .from("welcome_screen")
+      .upsert({
+        id: "current",
+        member_id: member.id,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        email: member.email,
+        membership_plan: member.membership_plan,
+        license_plate: member.license_plate,
+        rewards_points: newPoints,
+        lifetime_washes: newWashes,
+        updated_at: new Date().toISOString(),
+      })
+
+    if (welcomeError) {
+      setMessage(welcomeError.message)
+      setLoading(false)
+      return
+    }
+
+    setMember({
+      ...member,
+      rewards_points: newPoints,
+      lifetime_washes: newWashes,
+    })
+
+    setCheckedIn(true)
+    setMessage("Wash started. Member checked in successfully.")
+    setLoading(false)
   }
 
+  const fullName = member
+    ? `${member.first_name || ""} ${member.last_name || ""}`.trim() ||
+      member.email
+    : ""
+
+  const vehicle = member
+    ? `${member.vehicle_color || ""} ${member.vehicle_make || ""} ${
+        member.vehicle_model || ""
+      }`.trim()
+    : ""
+
   return (
-    <main className="min-h-screen bg-slate-950 p-10 text-white">
-      <h1 className="text-5xl font-bold">Tunnel Operator Screen</h1>
+    <main className="min-h-screen bg-slate-950 px-6 py-8 text-white">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+              Braxy Buns Tunnel
+            </p>
+            <h1 className="mt-2 text-4xl font-bold">Tunnel Operations</h1>
+            <p className="mt-2 text-slate-400">
+              Lookup plate, confirm membership, and start wash.
+            </p>
+          </div>
 
-      <p className="mt-4 text-slate-300">
-        Enter a license plate to instantly verify membership.
-      </p>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Link
-          href="/admin"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-        >
-          Dashboard
-        </Link>
-
-        <Link
-          href="/admin/checkin"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-        >
-          QR Check-In
-        </Link>
-
-        <Link
-          href="/admin/members"
-          className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-        >
-          Members
-        </Link>
-      </div>
-
-      <div className="mt-10 max-w-3xl">
-        <input
-          value={plate}
-          onChange={(e) => setPlate(e.target.value.toUpperCase())}
-          placeholder="ENTER LICENSE PLATE..."
-          className="w-full rounded-2xl bg-white p-6 text-3xl font-bold text-slate-950"
-        />
-
-        <button
-          onClick={lookupPlate}
-          className="mt-4 rounded-2xl bg-cyan-400 px-8 py-4 text-xl font-bold text-slate-950"
-        >
-          {loading ? "Searching..." : "Find Member"}
-        </button>
-      </div>
-
-      {member && (
-        <section
-          className={`mt-10 rounded-3xl p-8 ${
-            member.membership_status === "active"
-              ? "bg-green-900"
-              : "bg-red-900"
-          }`}
-        >
-          <h2 className="text-4xl font-bold">
-            {member.first_name} {member.last_name}
-          </h2>
-
-          <p className="mt-3 text-xl">
-            {member.membership_plan}
-          </p>
-
-          <p className="mt-3 text-xl">
-            Status: {member.membership_status}
-          </p>
-
-          <p className="mt-3 text-xl">
-            Plate: {member.license_plate}
-          </p>
-
-          <p className="mt-3 text-xl">
-            Vehicle: {member.vehicle_color} {member.vehicle_make}{" "}
-            {member.vehicle_model}
-          </p>
-
-          <p className="mt-3 text-xl">
-            Braxy Bucks: {member.rewards_points || 0}
-          </p>
-
-          <p className="mt-3 text-xl">
-            Lifetime Washes: {member.lifetime_washes || 0}
-          </p>
-
-          <button
-            onClick={checkInMember}
-            disabled={member.membership_status !== "active"}
-            className="mt-8 rounded-2xl bg-cyan-400 px-8 py-4 text-xl font-bold text-slate-950 disabled:opacity-50"
+          <Link
+            href="/admin"
+            className="rounded-xl border border-slate-700 px-5 py-3 font-bold hover:bg-slate-900"
           >
-            Check In Wash
-          </button>
-        </section>
-      )}
-
-      {message && (
-        <div className="mt-8 rounded-2xl bg-white/10 p-4 text-xl font-bold text-cyan-300">
-          {message}
+            Back to Admin
+          </Link>
         </div>
-      )}
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+          <label className="text-sm font-semibold text-slate-300">
+            License Plate
+          </label>
+
+          <div className="mt-3 flex flex-col gap-3 md:flex-row">
+            <input
+              value={plate}
+              onChange={(e) => setPlate(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") lookupPlate()
+              }}
+              placeholder="Enter plate..."
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-5 py-4 text-xl uppercase text-white outline-none focus:border-cyan-400"
+            />
+
+            <button
+              onClick={lookupPlate}
+              disabled={loading}
+              className="rounded-xl bg-cyan-400 px-8 py-4 text-lg font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
+            >
+              {loading ? "Searching..." : "Lookup"}
+            </button>
+          </div>
+
+          {message && (
+            <div className="mt-5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-cyan-100">
+              {message}
+            </div>
+          )}
+        </section>
+
+        {member && (
+          <section className="mt-8 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
+              <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">
+                Member Found
+              </p>
+
+              <h2 className="mt-3 text-4xl font-bold">{fullName}</h2>
+
+              <div className="mt-6 space-y-3 text-lg">
+                <p>
+                  <span className="text-slate-400">Plan:</span>{" "}
+                  <span className="font-bold text-cyan-300">
+                    {member.membership_plan || "No plan"}
+                  </span>
+                </p>
+
+                <p>
+                  <span className="text-slate-400">Status:</span>{" "}
+                  <span
+                    className={
+                      member.membership_status === "active"
+                        ? "font-bold text-green-300"
+                        : "font-bold text-red-300"
+                    }
+                  >
+                    {member.membership_status || "inactive"}
+                  </span>
+                </p>
+
+                <p>
+                  <span className="text-slate-400">Vehicle:</span>{" "}
+                  {vehicle || "No vehicle"}
+                </p>
+
+                <p>
+                  <span className="text-slate-400">Plate:</span>{" "}
+                  {member.license_plate || "No plate"}
+                </p>
+
+                <p>
+                  <span className="text-slate-400">Braxy Bucks:</span>{" "}
+                  {member.rewards_points || 0}
+                </p>
+
+                <p>
+                  <span className="text-slate-400">Lifetime Washes:</span>{" "}
+                  {member.lifetime_washes || 0}
+                </p>
+              </div>
+
+              <button
+                onClick={startWash}
+                disabled={
+                  loading ||
+                  checkedIn ||
+                  member.membership_status !== "active"
+                }
+                className="mt-8 w-full rounded-2xl bg-cyan-400 px-8 py-5 text-2xl font-black text-slate-950 hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {checkedIn ? "WASH STARTED" : "START WASH"}
+              </button>
+            </div>
+
+            <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-cyan-400/40 bg-cyan-400 p-8 text-center text-slate-950">
+              <div>
+                <p className="text-3xl font-black">WELCOME BACK</p>
+                <h2 className="mt-4 text-6xl font-black uppercase">
+                  {member.first_name || "MEMBER"}
+                </h2>
+
+                <div className="mt-8 rounded-3xl bg-slate-950 px-8 py-6 text-white">
+                  <p className="text-3xl font-black">
+                    {member.membership_plan || "WASH CLUB"}
+                  </p>
+                  <p className="mt-2 text-xl text-cyan-300">
+                    {member.license_plate}
+                  </p>
+                </div>
+
+                {checkedIn && (
+                  <p className="mt-8 text-3xl font-black">
+                    PLEASE ENTER THE TUNNEL
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
     </main>
   )
 }

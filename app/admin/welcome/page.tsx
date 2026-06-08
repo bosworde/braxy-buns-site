@@ -1,276 +1,226 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
-type Member = {
-  id: string
-  email: string
+type WelcomeMember = {
   first_name: string | null
   last_name: string | null
   membership_plan: string | null
-  membership_status: string | null
-  vehicle_make: string | null
-  vehicle_model: string | null
-  vehicle_color: string | null
   license_plate: string | null
   rewards_points: number | null
   lifetime_washes: number | null
+  updated_at: string | null
 }
 
-export default function TunnelWelcomePage() {
-  const [plate, setPlate] = useState("")
-  const [member, setMember] = useState<Member | null>(null)
-  const [message, setMessage] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [fullscreenMode, setFullscreenMode] = useState(false)
+export default function WelcomeScreenPage() {
+  const [member, setMember] = useState<WelcomeMember | null>(null)
+  const [showMember, setShowMember] = useState(false)
+  const lastUpdatedAt = useRef<string | null>(null)
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  async function lookupPlate() {
-    setLoading(true)
-    setMessage("")
-    setMember(null)
-
-    const cleanPlate = plate.replace(/\s+/g, "").toLowerCase()
-
-    if (!cleanPlate) {
-      setMessage("Enter a license plate.")
-      setLoading(false)
-      return
-    }
-
-    const { data, error } = await supabase
-      .from("members")
+  async function loadWelcomeScreen() {
+    const { data } = await supabase
+      .from("welcome_screen")
       .select("*")
-      .not("license_plate", "is", null)
+      .eq("id", "current")
+      .maybeSingle()
 
-    if (error) {
-      setMessage(error.message)
-      setLoading(false)
-      return
+    if (!data) return
+
+    setMember(data)
+
+    if (data.first_name && data.updated_at !== lastUpdatedAt.current) {
+      lastUpdatedAt.current = data.updated_at
+      setShowMember(true)
+
+      if (resetTimer.current) {
+        clearTimeout(resetTimer.current)
+      }
+
+      resetTimer.current = setTimeout(() => {
+        setShowMember(false)
+      }, 15000)
     }
-
-    const found =
-      data?.find(
-        (m) =>
-          String(m.license_plate || "")
-            .replace(/\s+/g, "")
-            .toLowerCase() === cleanPlate
-      ) || null
-
-    if (!found) {
-      setMessage("No member found for this plate.")
-    } else {
-      setMember(found)
-    }
-
-    setLoading(false)
   }
 
-  const fullName = member
-    ? `${member.first_name || ""} ${member.last_name || ""}`.trim() ||
-      member.email
-    : ""
+  useEffect(() => {
+    loadWelcomeScreen()
 
-  const vehicle = member
-    ? [member.vehicle_color, member.vehicle_make, member.vehicle_model]
-        .filter(Boolean)
-        .join(" ")
-    : ""
+    const interval = setInterval(loadWelcomeScreen, 2000)
 
-  const isActive = member?.membership_status === "active"
+    return () => {
+      clearInterval(interval)
 
-  const hour = new Date().getHours()
-  const greeting =
-    hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening"
+      if (resetTimer.current) {
+        clearTimeout(resetTimer.current)
+      }
+    }
+  }, [])
 
-  const plan = member?.membership_plan || "Prospect"
+  const waiting = !showMember || !member?.first_name
 
-  const planBadgeClass = plan.includes("Max")
-    ? "bg-yellow-400 text-slate-950"
-    : plan.includes("Plus")
-    ? "bg-blue-500 text-white"
-    : plan.includes("Basic")
-    ? "bg-green-500 text-white"
-    : "bg-slate-700 text-white"
+  const tierImage =
+    member?.membership_plan === "Basic Wash Club"
+      ? "/gecko.png"
+      : member?.membership_plan === "Plus Wash Club"
+      ? "/iguana.png"
+      : "/dragon.png"
+
+  const tierName =
+    member?.membership_plan === "Basic Wash Club"
+      ? "Gecko Club"
+      : member?.membership_plan === "Plus Wash Club"
+      ? "Iguana Club"
+      : "Dragon Club"
+
+  const tierSubtitle =
+    member?.membership_plan === "Basic Wash Club"
+      ? "Essential Member"
+      : member?.membership_plan === "Plus Wash Club"
+      ? "Plus Member"
+      : "Premium Member"
+
+const tierCardClass =
+  member?.membership_plan === "Basic Wash Club"
+    ? "bg-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]"
+    : member?.membership_plan === "Plus Wash Club"
+    ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
+    : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
+      const tierBackgroundClass =
+  member?.membership_plan === "Basic Wash Club"
+    ? "from-emerald-900 via-slate-950 to-emerald-950"
+    : member?.membership_plan === "Plus Wash Club"
+    ? "from-cyan-900 via-slate-950 to-blue-950"
+    : "from-yellow-900 via-slate-950 to-purple-950"
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
-      <div className="mx-auto max-w-7xl space-y-8">
-        {!fullscreenMode && (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                  Braxy Buns Tunnel
-                </p>
-                <h1 className="mt-2 text-4xl font-bold">
-                  Tunnel Welcome Screen
-                </h1>
-                <p className="mt-2 text-slate-400">
-                  Simulate the customer-facing welcome display at the wash entrance.
-                </p>
-              </div>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.25),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.2),transparent_35%)]" />
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/admin"
-                  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/admin/tunnel"
-                  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-                >
-                  Tunnel Lookup
-                </Link>
-                <Link
-                  href="/admin/checkin"
-                  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-                >
-                  Check In
-                </Link>
-              </div>
-            </div>
+      <div className="absolute inset-0 opacity-20">
+        <div className="h-full w-full bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      </div>
 
-            <section className="rounded-2xl bg-white/10 p-6">
-              <h2 className="text-2xl font-bold">Enter License Plate</h2>
+      <Link
+        href="/admin"
+        className="absolute left-6 top-6 z-20 rounded-xl bg-white/10 px-4 py-2 font-bold backdrop-blur hover:bg-white/20"
+      >
+        Admin
+      </Link>
 
-              <div className="mt-4 flex flex-wrap gap-3">
-                <input
-                  className="w-full max-w-md rounded-xl bg-white p-4 text-xl font-bold uppercase text-slate-950"
-                  placeholder="ABC1234"
-                  value={plate}
-                  onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") lookupPlate()
-                  }}
-                />
+      {waiting ? (
+        <section className="relative z-10 text-center">
+          <p className="text-lg font-bold uppercase tracking-[0.6em] text-cyan-300">
+            Express Wash Club
+          </p>
 
-                <button
-                  onClick={lookupPlate}
-                  disabled={loading}
-                  className="rounded-xl bg-cyan-400 px-6 py-4 font-bold text-slate-950 disabled:opacity-50"
-                >
-                  {loading ? "Looking..." : "Show Welcome Screen"}
-                </button>
+          <h1 className="mt-6 text-8xl font-black tracking-tight text-cyan-300 drop-shadow-[0_0_35px_rgba(34,211,238,0.65)]">
+            BRAXY BUNS
+          </h1>
 
-                {member && (
-                  <button
-                    onClick={() => setFullscreenMode(true)}
-                    className="rounded-xl bg-purple-500 px-6 py-4 font-bold text-white"
-                  >
-                    Full Screen Mode
-                  </button>
-                )}
-              </div>
+          <div className="mx-auto mt-8 h-1 w-72 rounded-full bg-cyan-300 shadow-[0_0_30px_rgba(34,211,238,0.9)]" />
 
-              {message && (
-                <p className="mt-4 font-semibold text-cyan-300">{message}</p>
-              )}
-            </section>
-          </>
-        )}
+          <p className="mt-8 text-4xl font-bold text-slate-200">
+            Waiting for next member...
+          </p>
 
-        {member && (
-          <section className="overflow-hidden rounded-[2rem] border border-cyan-300/40 bg-slate-900 shadow-2xl">
-            <div className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 p-1">
-              <div className="rounded-[1.8rem] bg-slate-950 p-8 text-center md:p-10">
-                {fullscreenMode && (
-                  <button
-                    onClick={() => setFullscreenMode(false)}
-                    className="mb-6 rounded-xl bg-white/10 px-5 py-3 font-bold text-white"
-                  >
-                    Exit Full Screen
-                  </button>
-                )}
+          <p className="mt-6 text-2xl text-slate-400">
+            Clean cars. Brighter futures.
+          </p>
+        </section>
+      ) : (
+        <section className="relative z-10 mx-auto w-full max-w-6xl px-8 text-center">
+       <div
+  className={`rounded-[3rem] border border-cyan-300/40 bg-gradient-to-br ${tierBackgroundClass} p-10 shadow-[0_0_70px_rgba(34,211,238,0.25)] backdrop-blur`}
+>
+            <div className="relative mx-auto mb-6 flex w-fit items-center justify-center">
+              <div className="absolute -inset-10 rounded-[3rem] bg-[radial-gradient(circle_at_15%_50%,rgba(255,122,0,0.9),transparent_35%),radial-gradient(circle_at_40%_45%,rgba(255,214,0,0.85),transparent_35%),radial-gradient(circle_at_62%_45%,rgba(0,210,120,0.65),transparent_35%),radial-gradient(circle_at_78%_45%,rgba(0,94,255,0.9),transparent_38%),radial-gradient(circle_at_95%_45%,rgba(139,92,246,0.75),transparent_35%)] blur-2xl" />
 
+              <div className="relative rounded-[2rem] bg-slate-950/90 p-4 shadow-[0_0_45px_rgba(34,211,238,0.35)]">
                 <Image
                   src="/logo.png"
                   alt="Braxy Buns"
-                  width={260}
-                  height={120}
-                  className="mx-auto mb-6"
+                  width={430}
+                  height={430}
+                  className="rounded-[1.5rem]"
+                  priority
+                />
+              </div>
+            </div>
+
+            <p className="text-2xl font-black uppercase tracking-[0.65em] text-cyan-300">
+              Welcome Back
+            </p>
+
+            <h1 className="mt-4 text-9xl font-black uppercase leading-none tracking-tight text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.25)]">
+              {member?.first_name}
+            </h1>
+
+            <div
+              className={`mx-auto mt-10 max-w-4xl rounded-[2rem] px-10 py-8 text-slate-950 ${tierCardClass}`}
+            >
+              <div className="flex flex-col items-center justify-center gap-6">
+                <Image
+                  src={tierImage}
+                  alt={tierName}
+                width={280}
+height={280}
+                  className="rounded-3xl drop-shadow-[0_0_25px_rgba(255,255,255,0.35)]"
+                  priority
                 />
 
-                <p className="text-lg font-bold uppercase tracking-[0.35em] text-cyan-300">
-                  {greeting}
-                </p>
+                <div>
+                  <p className="text-6xl font-black">{tierName}</p>
 
-                <p className="mt-3 text-lg font-bold uppercase tracking-[0.5em] text-cyan-300">
-                  Welcome Back
-                </p>
-
-                <h2 className="mx-auto mt-6 max-w-6xl text-center text-5xl font-black uppercase leading-tight tracking-wide md:text-7xl">
-                  {fullName}
-                </h2>
-
-                <div className="mx-auto mt-8 grid max-w-5xl gap-4 md:grid-cols-3">
-                  <WelcomeCard title="Membership" value={plan} badgeClass={planBadgeClass} />
-                  <WelcomeCard title="Status" value={member.membership_status || "inactive"} />
-                  <WelcomeCard title="Plate" value={member.license_plate || "—"} />
-                </div>
-
-                <div className="mx-auto mt-6 grid max-w-5xl gap-4 md:grid-cols-3">
-                  <WelcomeCard title="Braxy Bucks" value={`${member.rewards_points || 0} pts`} />
-                  <WelcomeCard title="Lifetime Washes" value={member.lifetime_washes || 0} />
-                  <WelcomeCard title="Vehicle" value={vehicle || "Not added"} />
-                </div>
-
-                <div
-                  className={`mx-auto mt-10 max-w-3xl rounded-2xl p-6 text-3xl font-black uppercase ${
-                    isActive
-                      ? "bg-cyan-400 text-slate-950"
-                      : "bg-red-500 text-white"
-                  }`}
-                >
-                  {isActive ? "Clear To Wash" : "See Attendant"}
-                </div>
-
-                <div className="mx-auto mt-8 max-w-4xl rounded-2xl bg-white/10 p-6">
-                  <p className="text-sm font-bold uppercase tracking-[0.35em] text-cyan-300">
-                    Your Impact
+                  <p className="mt-2 text-2xl font-black uppercase tracking-[0.3em]">
+                    {tierSubtitle}
                   </p>
-                  <p className="mt-4 text-2xl font-bold text-white">
-                    By choosing Braxy Buns, you help create meaningful employment
-                    opportunities for neurodiverse team members.
+
+                  <p className="mt-6 text-3xl font-black tracking-widest">
+                    {member?.license_plate || ""}
                   </p>
                 </div>
               </div>
             </div>
-          </section>
-        )}
-      </div>
-    </main>
-  )
-}
 
-function WelcomeCard({
-  title,
-  value,
-  badgeClass,
-}: {
-  title: string
-  value: string | number
-  badgeClass?: string
-}) {
-  return (
-    <div className="rounded-2xl bg-white/10 p-6">
-      <p className="text-sm uppercase tracking-[0.25em] text-slate-400">
-        {title}
-      </p>
+            <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-2">
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-8">
+                <p className="text-lg uppercase tracking-[0.3em] text-slate-400">
+                  Braxy Bucks
+                </p>
+                <p className="mt-4 text-7xl font-black text-cyan-300">
+                  {member?.rewards_points || 0}
+                </p>
+              </div>
 
-      {badgeClass ? (
-        <p
-          className={`mt-4 inline-block rounded-xl px-4 py-2 text-2xl font-black ${badgeClass}`}
-        >
-          {value}
-        </p>
-      ) : (
-        <p className="mt-3 text-3xl font-black text-cyan-300">{value}</p>
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-8">
+                <p className="text-lg uppercase tracking-[0.3em] text-slate-400">
+                  Lifetime Washes
+                </p>
+                <p className="mt-4 text-7xl font-black text-cyan-300">
+                  {member?.lifetime_washes || 0}
+                </p>
+              </div>
+            </div>
+
+            <div className="mx-auto mt-10 max-w-4xl rounded-3xl border border-cyan-300/30 bg-slate-950/70 p-8">
+              <p className="text-3xl font-black uppercase text-white">
+                Thank you for supporting neurodiverse employment
+              </p>
+              <p className="mt-3 text-xl text-slate-300">
+                Every wash helps create meaningful work and brighter futures.
+              </p>
+            </div>
+
+            <p className="mt-8 text-2xl font-bold uppercase tracking-[0.4em] text-cyan-300">
+              Please enter the tunnel
+            </p>
+          </div>
+        </section>
       )}
-    </div>
+    </main>
   )
 }
