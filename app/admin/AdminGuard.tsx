@@ -23,6 +23,9 @@ export default function AdminGuard({
         data: { session },
       } = await supabase.auth.getSession()
 
+      console.log("ADMIN SESSION:", session)
+      console.log("ADMIN USER EMAIL:", session?.user?.email)
+
       const user = session?.user
 
       if (!user) {
@@ -31,7 +34,7 @@ export default function AdminGuard({
         return
       }
 
-      const email = user.email?.toLowerCase() || ""
+      const email = user.email?.toLowerCase().trim() || ""
 
       if (!ADMIN_EMAILS.includes(email)) {
         setChecking(false)
