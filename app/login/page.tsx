@@ -12,10 +12,10 @@ export default function LoginPage() {
     setSending(true)
     setMessage("")
 
-    const redirectUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/dashboard`
-        : "https://www.braxybuns.com/dashboard"
+const redirectUrl =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/auth/callback`
+    : "https://www.braxybuns.com/auth/callback"
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
