@@ -89,18 +89,7 @@ const tierCardClass =
     : member?.membership_plan === "Plus Wash Club"
     ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
     : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
-   const tierCardClass =
-  member?.membership_plan === "Basic Wash Club"
-    ? "bg-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]"
-    : member?.membership_plan === "Plus Wash Club"
-    ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
-    : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
-    const tierCardClass =
-  member?.membership_plan === "Basic Wash Club"
-    ? "bg-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]"
-    : member?.membership_plan === "Plus Wash Club"
-    ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
-    : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
+  
 
 const tierBackgroundClass =
   member?.membership_plan === "Basic Wash Club"
