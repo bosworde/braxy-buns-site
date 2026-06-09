@@ -138,7 +138,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+<div className="grid gap-3 md:grid-cols-5 lg:grid-cols-5">
           <Link
             href="/admin/tunnel"
             className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
@@ -166,6 +166,45 @@ export default function AdminPage() {
           >
             Manage Members
           </Link>
+          <Link
+  href="/admin/revenue"
+  className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
+>
+  Revenue Dashboard
+</Link>
+
+<Link
+  href="/admin/operations"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Operations Dashboard
+</Link>
+<Link
+  href="/admin/lpr"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  License Plate Reader
+</Link>
+
+<Link
+  href="/admin/analytics"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Analytics Dashboard
+</Link>
+<Link
+  href="/admin/payments"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Payments Dashboard
+</Link>
+
+<Link
+  href="/admin/investors"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Investor Dashboard
+</Link>
 
           <Link
             href="/admin/add-member"
