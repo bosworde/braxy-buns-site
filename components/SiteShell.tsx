@@ -22,8 +22,8 @@ import { ChevronRight } from "lucide-react";
 
 const AUTISM_GRADIENT =
   "linear-gradient(90deg,#E40303 0%,#FF8C00 18%,#FFED00 34%,#008026 50%,#004DFF 68%,#750787 100%)";
+const LOGO_SRC = "/logo.png";
 
-const LOGO_SRC = "/braxy-buns-logo.png";
 const FALLBACK_LOGO =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(`

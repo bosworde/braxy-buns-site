@@ -8,7 +8,7 @@
   "theme_color": "#061426",
   "icons": [
     {
-      "src": "/braxy-buns-logo.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

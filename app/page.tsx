@@ -51,29 +51,9 @@ import {
   Check,
 } from "lucide-react";
 
-const LOGO_SRC = "/braxy-buns-logo.png";
+const LOGO_SRC = "/logo.png";
 
-const FALLBACK_LOGO =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(`
-  <svg xmlns='http://www.w3.org/2000/svg' width='760' height='240' viewBox='0 0 760 240'>
-    <defs>
-      <linearGradient id='g' x1='0' x2='1'>
-        <stop offset='0' stop-color='#E40303'/>
-        <stop offset='0.18' stop-color='#FF8C00'/>
-        <stop offset='0.34' stop-color='#FFED00'/>
-        <stop offset='0.50' stop-color='#008026'/>
-        <stop offset='0.68' stop-color='#004DFF'/>
-        <stop offset='1' stop-color='#750787'/>
-      </linearGradient>
-    </defs>
-    <rect x='0' y='0' width='760' height='240' rx='28' fill='#061426'/>
-    <rect x='16' y='16' width='728' height='208' rx='22' fill='none' stroke='url(#g)' stroke-width='6' opacity='0.9'/>
-    <text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='44' fill='white'>
-      BRAXY BUNS CARWASH
-    </text>
-  </svg>
-  `);
+
 
 const brand = {
   name: "Braxy Buns Carwash",
@@ -233,7 +213,7 @@ function Logo({ variant }: { variant: "nav" | "hero" }) {
         <img
           src={LOGO_SRC}
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = FALLBACK_LOGO;
+            (e.currentTarget as HTMLImageElement).src = LOGO_SRC;
           }}
           alt={brand.name}
           className={classNames(
