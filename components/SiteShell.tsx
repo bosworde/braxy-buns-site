@@ -54,7 +54,7 @@ const navItems = [
   { label: "Investors", href: "/investors" },
   { label: "Careers", href: "/careers" },
   { label: "Founder’s Letter", href: "/founders-letter" },
-  { label: "Contact", href: "/contact" },
+  { label: "Contact", href: "/#contact" },
 ];
 function classNames(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
