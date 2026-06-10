@@ -193,7 +193,9 @@ console.log("QUEUE RESULT:", queueResult)
             </Link>
           </div>
         </div>
-
+<Link href="/admin/queue" className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950">
+  Queue
+</Link>
         <section className="rounded-3xl bg-white/10 p-6">
           <h2 className="text-2xl font-black">Scan / Enter Plate</h2>
 

@@ -117,6 +117,19 @@ export default function RevenuePage() {
             >
               Investors
             </Link>
+            <Link
+  href="/admin/operations"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Operations
+</Link>
+
+<Link
+  href="/admin/queue"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Queue
+</Link>
 
             <button
               onClick={loadData}

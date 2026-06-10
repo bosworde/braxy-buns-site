@@ -12,8 +12,17 @@ type WashVisit = {
   license_plate: string | null
 }
 
+type QueueItem = {
+  id: string
+  created_at: string
+  wash_visit_id: string | null
+  license_plate: string | null
+  status: string | null
+}
+
 export default function OperationsPage() {
   const [washes, setWashes] = useState<WashVisit[]>([])
+  const [queue, setQueue] = useState<QueueItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,35 +32,37 @@ export default function OperationsPage() {
   async function loadData() {
     setLoading(true)
 
-    const { data } = await supabase
-      .from("wash_visits")
-      .select("*")
-      .order("created_at", { ascending: false })
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
 
-    setWashes(data || [])
+    const [{ data: washData }, { data: queueData }] = await Promise.all([
+      supabase
+        .from("wash_visits")
+        .select("*")
+        .gte("created_at", todayStart.toISOString())
+        .order("created_at", { ascending: false }),
+
+      supabase
+        .from("tunnel_queue")
+        .select("*")
+        .gte("created_at", todayStart.toISOString())
+        .order("created_at", { ascending: false }),
+    ])
+
+    setWashes(washData || [])
+    setQueue(queueData || [])
     setLoading(false)
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-
-  const todaysWashes = washes.filter((wash) =>
-    wash.created_at?.startsWith(today)
-  )
+  const waiting = queue.filter((item) => item.status === "waiting").length
+  const inTunnel = queue.filter((item) => item.status === "in_tunnel").length
+  const completed = queue.filter((item) => item.status === "completed").length
+  const rejected = queue.filter((item) => item.status === "rejected").length
 
   const last25Washes = washes.slice(0, 25)
-
-  const uniquePlatesToday = new Set(
-    todaysWashes.map((wash) => wash.license_plate).filter(Boolean)
-  ).size
-
-  const washesByPlate = washes.reduce<Record<string, number>>((acc, wash) => {
-    const plate = wash.license_plate || "Unknown"
-    acc[plate] = (acc[plate] || 0) + 1
-    return acc
-  }, {})
-
-  const mostActivePlate =
-    Object.entries(washesByPlate).sort((a, b) => b[1] - a[1])[0]?.[0] || "—"
+  const activeQueue = queue.filter(
+    (item) => item.status === "waiting" || item.status === "in_tunnel"
+  )
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -63,11 +74,11 @@ export default function OperationsPage() {
             </p>
 
             <h1 className="mt-2 text-4xl font-black">
-              Operations Dashboard
+              Operations Center
             </h1>
 
             <p className="mt-2 text-slate-400">
-              Real-time tunnel activity, plates, check-ins, and wash volume.
+              Live tunnel activity, queue status, wash volume, and daily operations.
             </p>
           </div>
 
@@ -82,6 +93,10 @@ export default function OperationsPage() {
 
             <Link href="/admin/lpr-camera" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
               LPR Camera
+            </Link>
+
+            <Link href="/admin/queue" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+              Queue
             </Link>
 
             <button
@@ -99,72 +114,120 @@ export default function OperationsPage() {
           </div>
         ) : (
           <>
-            <section className="grid gap-4 md:grid-cols-4">
-              <Stat title="Cars Today" value={todaysWashes.length} />
-              <Stat title="Unique Plates Today" value={uniquePlatesToday} />
-              <Stat title="Lifetime Washes" value={washes.length} />
-              <Stat title="Most Active Plate" value={mostActivePlate} />
+            <section className="grid gap-4 md:grid-cols-5">
+              <Stat title="Today’s Washes" value={washes.length} />
+              <Stat title="Waiting" value={waiting} />
+              <Stat title="In Tunnel" value={inTunnel} />
+              <Stat title="Completed" value={completed} />
+              <Stat title="Rejected" value={rejected} />
             </section>
 
-            <section className="rounded-3xl bg-white/10 p-6">
-              <h2 className="text-2xl font-black">
-                Live Tunnel Activity Feed
-              </h2>
+            <section className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-3xl bg-white/10 p-6">
+                <h2 className="text-2xl font-black">Live Active Queue</h2>
 
-              <div className="mt-6 overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-white/10 text-slate-400">
-                      <th className="py-3 pr-4">Time</th>
-                      <th className="py-3 pr-4">Plate</th>
-                      <th className="py-3 pr-4">Email</th>
-                      <th className="py-3 pr-4">Plan</th>
-                      <th className="py-3 pr-4">Result</th>
-                    </tr>
-                  </thead>
+                <div className="mt-5 space-y-3">
+                  {activeQueue.length === 0 ? (
+                    <p className="text-slate-400">No cars currently waiting or in tunnel.</p>
+                  ) : (
+                    activeQueue.map((item, index) => (
+                      <div key={item.id} className="rounded-2xl bg-slate-950/70 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                          Car #{index + 1}
+                        </p>
 
-                  <tbody>
-                    {last25Washes.length === 0 ? (
-                      <tr>
-                        <td className="py-6 text-slate-400" colSpan={5}>
-                          No tunnel activity yet.
-                        </td>
+                        <div className="mt-2 flex items-center justify-between gap-4">
+                          <p className="text-2xl font-black text-cyan-300">
+                            {item.license_plate || "No Plate"}
+                          </p>
+
+                          <StatusBadge status={item.status || "waiting"} />
+                        </div>
+
+                        <p className="mt-2 text-xs text-slate-500">
+                          {new Date(item.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-3xl bg-white/10 p-6">
+                <h2 className="text-2xl font-black">Today’s Wash Feed</h2>
+
+                <div className="mt-6 overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-white/10 text-slate-400">
+                        <th className="py-3 pr-4">Time</th>
+                        <th className="py-3 pr-4">Plate</th>
+                        <th className="py-3 pr-4">Plan</th>
+                        <th className="py-3 pr-4">Result</th>
                       </tr>
-                    ) : (
-                      last25Washes.map((wash) => (
-                        <tr key={wash.id} className="border-b border-white/10">
-                          <td className="py-3 pr-4">
-                            {new Date(wash.created_at).toLocaleString()}
-                          </td>
+                    </thead>
 
-                          <td className="py-3 pr-4 font-black text-cyan-300">
-                            {wash.license_plate || "—"}
-                          </td>
-
-                          <td className="py-3 pr-4">
-                            {wash.email || "—"}
-                          </td>
-
-                          <td className="py-3 pr-4">
-                            {wash.membership_plan || "—"}
-                          </td>
-
-                          <td className="py-3 pr-4">
-                            <span className="rounded-full bg-green-400 px-3 py-1 text-xs font-black text-slate-950">
-                              APPROVED
-                            </span>
+                    <tbody>
+                      {last25Washes.length === 0 ? (
+                        <tr>
+                          <td className="py-6 text-slate-400" colSpan={4}>
+                            No washes today yet.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        last25Washes.map((wash) => (
+                          <tr key={wash.id} className="border-b border-white/10">
+                            <td className="py-3 pr-4">
+                              {new Date(wash.created_at).toLocaleTimeString()}
+                            </td>
+
+                            <td className="py-3 pr-4 font-black text-cyan-300">
+                              {wash.license_plate || "—"}
+                            </td>
+
+                            <td className="py-3 pr-4">
+                              {wash.membership_plan || "—"}
+                            </td>
+
+                            <td className="py-3 pr-4">
+                              <span className="rounded-full bg-green-400 px-3 py-1 text-xs font-black text-slate-950">
+                                APPROVED
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </section>
           </>
         )}
       </div>
     </main>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    waiting: "bg-yellow-300 text-slate-950",
+    in_tunnel: "bg-blue-400 text-slate-950",
+    completed: "bg-green-400 text-slate-950",
+    rejected: "bg-red-400 text-slate-950",
+  }
+
+  const labels: Record<string, string> = {
+    waiting: "WAITING",
+    in_tunnel: "IN TUNNEL",
+    completed: "COMPLETED",
+    rejected: "REJECTED",
+  }
+
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-black ${styles[status] || "bg-slate-700 text-white"}`}>
+      {labels[status] || status.toUpperCase()}
+    </span>
   )
 }
 
