@@ -20,14 +20,44 @@ type QueueItem = {
   status: string | null
 }
 
+type Member = {
+  id: string
+  membership_plan: string | null
+  membership_status: string | null
+}
+
 export default function OperationsPage() {
   const [washes, setWashes] = useState<WashVisit[]>([])
   const [queue, setQueue] = useState<QueueItem[]>([])
+  const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+useEffect(() => {
+  loadData()
 
-  useEffect(() => {
+  const channel = supabase
+    .channel("operations_realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tunnel_queue",
+      },
+      () => {
+        loadData()
+      }
+    )
+    .subscribe()
+
+  const interval = setInterval(() => {
     loadData()
-  }, [])
+  }, 15000)
+
+  return () => {
+    supabase.removeChannel(channel)
+    clearInterval(interval)
+  }
+}, [])
 
   async function loadData() {
     setLoading(true)
@@ -35,22 +65,28 @@ export default function OperationsPage() {
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
 
-    const [{ data: washData }, { data: queueData }] = await Promise.all([
-      supabase
-        .from("wash_visits")
-        .select("*")
-        .gte("created_at", todayStart.toISOString())
-        .order("created_at", { ascending: false }),
+    const [{ data: washData }, { data: queueData }, { data: memberData }] =
+      await Promise.all([
+        supabase
+          .from("wash_visits")
+          .select("*")
+          .gte("created_at", todayStart.toISOString())
+          .order("created_at", { ascending: false }),
 
-      supabase
-        .from("tunnel_queue")
-        .select("*")
-        .gte("created_at", todayStart.toISOString())
-        .order("created_at", { ascending: false }),
-    ])
+        supabase
+          .from("tunnel_queue")
+          .select("*")
+          .gte("created_at", todayStart.toISOString())
+          .order("created_at", { ascending: false }),
+
+        supabase
+          .from("members")
+          .select("id, membership_plan, membership_status"),
+      ])
 
     setWashes(washData || [])
     setQueue(queueData || [])
+    setMembers(memberData || [])
     setLoading(false)
   }
 
@@ -59,7 +95,18 @@ export default function OperationsPage() {
   const completed = queue.filter((item) => item.status === "completed").length
   const rejected = queue.filter((item) => item.status === "rejected").length
 
+  const activeMembers = members.filter((member) =>
+    ["active", "Active"].includes(member.membership_status || "")
+  )
+
+  const planCounts = activeMembers.reduce<Record<string, number>>((acc, member) => {
+    const plan = member.membership_plan || "No Plan"
+    acc[plan] = (acc[plan] || 0) + 1
+    return acc
+  }, {})
+
   const last25Washes = washes.slice(0, 25)
+
   const activeQueue = queue.filter(
     (item) => item.status === "waiting" || item.status === "in_tunnel"
   )
@@ -85,6 +132,10 @@ export default function OperationsPage() {
           <div className="flex flex-wrap gap-3">
             <Link href="/admin" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
               Admin Home
+            </Link>
+
+            <Link href="/admin/command" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
+              Command Center
             </Link>
 
             <Link href="/admin/lpr" className="rounded-xl bg-white/10 px-5 py-3 font-bold">
@@ -114,16 +165,17 @@ export default function OperationsPage() {
           </div>
         ) : (
           <>
-            <section className="grid gap-4 md:grid-cols-5">
+            <section className="grid gap-4 md:grid-cols-6">
               <Stat title="Today’s Washes" value={washes.length} />
               <Stat title="Waiting" value={waiting} />
               <Stat title="In Tunnel" value={inTunnel} />
               <Stat title="Completed" value={completed} />
               <Stat title="Rejected" value={rejected} />
+              <Stat title="Active Members" value={activeMembers.length} />
             </section>
 
-            <section className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-3xl bg-white/10 p-6">
+            <section className="grid gap-6 lg:grid-cols-3">
+              <div className="rounded-3xl bg-white/10 p-6 lg:col-span-2">
                 <h2 className="text-2xl font-black">Live Active Queue</h2>
 
                 <div className="mt-5 space-y-3">
@@ -154,52 +206,71 @@ export default function OperationsPage() {
               </div>
 
               <div className="rounded-3xl bg-white/10 p-6">
-                <h2 className="text-2xl font-black">Today’s Wash Feed</h2>
+                <h2 className="text-2xl font-black">Membership Breakdown</h2>
 
-                <div className="mt-6 overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-white/10 text-slate-400">
-                        <th className="py-3 pr-4">Time</th>
-                        <th className="py-3 pr-4">Plate</th>
-                        <th className="py-3 pr-4">Plan</th>
-                        <th className="py-3 pr-4">Result</th>
+                <div className="mt-5 space-y-3">
+                  {Object.entries(planCounts).length === 0 ? (
+                    <p className="text-slate-400">No active members yet.</p>
+                  ) : (
+                    Object.entries(planCounts).map(([plan, count]) => (
+                      <div key={plan} className="rounded-2xl bg-slate-950/70 p-4">
+                        <p className="text-lg font-black">{planIcon(plan)} {plan}</p>
+                        <p className="mt-1 text-3xl font-black text-cyan-300">
+                          {count}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-3xl bg-white/10 p-6">
+              <h2 className="text-2xl font-black">Today’s Wash Feed</h2>
+
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400">
+                      <th className="py-3 pr-4">Time</th>
+                      <th className="py-3 pr-4">Plate</th>
+                      <th className="py-3 pr-4">Plan</th>
+                      <th className="py-3 pr-4">Result</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {last25Washes.length === 0 ? (
+                      <tr>
+                        <td className="py-6 text-slate-400" colSpan={4}>
+                          No washes today yet.
+                        </td>
                       </tr>
-                    </thead>
+                    ) : (
+                      last25Washes.map((wash) => (
+                        <tr key={wash.id} className="border-b border-white/10">
+                          <td className="py-3 pr-4">
+                            {new Date(wash.created_at).toLocaleTimeString()}
+                          </td>
 
-                    <tbody>
-                      {last25Washes.length === 0 ? (
-                        <tr>
-                          <td className="py-6 text-slate-400" colSpan={4}>
-                            No washes today yet.
+                          <td className="py-3 pr-4 font-black text-cyan-300">
+                            {wash.license_plate || "—"}
+                          </td>
+
+                          <td className="py-3 pr-4">
+                            {planIcon(wash.membership_plan || "")} {wash.membership_plan || "—"}
+                          </td>
+
+                          <td className="py-3 pr-4">
+                            <span className="rounded-full bg-green-400 px-3 py-1 text-xs font-black text-slate-950">
+                              APPROVED
+                            </span>
                           </td>
                         </tr>
-                      ) : (
-                        last25Washes.map((wash) => (
-                          <tr key={wash.id} className="border-b border-white/10">
-                            <td className="py-3 pr-4">
-                              {new Date(wash.created_at).toLocaleTimeString()}
-                            </td>
-
-                            <td className="py-3 pr-4 font-black text-cyan-300">
-                              {wash.license_plate || "—"}
-                            </td>
-
-                            <td className="py-3 pr-4">
-                              {wash.membership_plan || "—"}
-                            </td>
-
-                            <td className="py-3 pr-4">
-                              <span className="rounded-full bg-green-400 px-3 py-1 text-xs font-black text-slate-950">
-                                APPROVED
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </section>
           </>
@@ -207,6 +278,17 @@ export default function OperationsPage() {
       </div>
     </main>
   )
+}
+
+function planIcon(plan: string) {
+  if (plan.includes("Dragon")) return "🐉"
+  if (plan.includes("Iguana")) return "🦎"
+  if (plan.includes("Gecko")) return "🦎"
+  if (plan.includes("Founding")) return "⭐"
+  if (plan.includes("Max")) return "🐉"
+  if (plan.includes("Plus")) return "🦎"
+  if (plan.includes("Basic")) return "🦎"
+  return "🚗"
 }
 
 function StatusBadge({ status }: { status: string }) {

@@ -9,19 +9,44 @@ type QueueItem = {
   created_at: string
   license_plate: string | null
   status: string | null
+  member_id: string | null
+  first_name: string | null
+  membership_plan: string | null
+  rewards_points: number | null
+  lifetime_washes: number | null
 }
 
 export default function CustomerScreenPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+useEffect(() => {
+  loadQueue()
+
+  const channel = supabase
+    .channel("customer_screen_realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tunnel_queue",
+      },
+      () => {
+        loadQueue()
+      }
+    )
+    .subscribe()
+
+  const interval = setInterval(() => {
     loadQueue()
+  }, 15000)
 
-    const timer = setInterval(loadQueue, 5000)
-
-    return () => clearInterval(timer)
-  }, [])
+  return () => {
+    supabase.removeChannel(channel)
+    clearInterval(interval)
+  }
+}, [])
 
   async function loadQueue() {
     const todayStart = new Date()
@@ -39,10 +64,10 @@ export default function CustomerScreenPage() {
 
   const inTunnel = queue.filter((item) => item.status === "in_tunnel")
   const waiting = queue.filter((item) => item.status === "waiting")
+  const completed = queue.filter((item) => item.status === "completed")
 
   const nowServing = inTunnel[0] || null
   const nextUp = waiting[0] || null
-
   const estimatedWaitMinutes = waiting.length > 0 ? waiting.length * 2 : 0
 
   return (
@@ -55,7 +80,7 @@ export default function CustomerScreenPage() {
             </p>
 
             <h1 className="mt-2 text-5xl font-black">
-              Customer Arrival Screen
+              Customer Screen
             </h1>
           </div>
 
@@ -83,20 +108,40 @@ export default function CustomerScreenPage() {
               </h2>
 
               <p className="mt-6 text-3xl font-bold text-white/80">
-                Premium Car Wash Technology. Built for Fulshear.
+                Premium car wash technology with a mission bigger than clean cars.
               </p>
             </section>
 
             <section className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-3xl bg-green-400 p-10 text-slate-950">
-                <p className="text-sm font-black uppercase tracking-[0.35em]">
-                  Now Serving
-                </p>
+            <div className="rounded-3xl bg-green-400 p-10 text-slate-950">
+  <p className="text-sm font-black uppercase tracking-[0.35em]">
+    Now Serving
+  </p>
 
-                <h3 className="mt-5 text-7xl font-black">
-                  {nowServing?.license_plate || "READY"}
-                </h3>
-              </div>
+  <h3 className="mt-5 text-7xl font-black">
+    {nowServing?.license_plate || "READY"}
+  </h3>
+
+  {nowServing && (
+    <div className="mt-5 space-y-2">
+      <p className="text-4xl font-black">
+        Welcome Back {nowServing.first_name || "Member"}
+      </p>
+
+      <p className="text-2xl font-bold">
+        {nowServing.membership_plan || "Wash Club"}
+      </p>
+
+      <p className="text-xl font-bold">
+        Braxy Bucks: {nowServing.rewards_points || 0}
+      </p>
+
+      <p className="text-xl font-bold">
+        Lifetime Washes: {nowServing.lifetime_washes || 0}
+      </p>
+    </div>
+  )}
+</div>
 
               <div className="rounded-3xl bg-cyan-400 p-10 text-slate-950">
                 <p className="text-sm font-black uppercase tracking-[0.35em]">
@@ -109,10 +154,11 @@ export default function CustomerScreenPage() {
               </div>
             </section>
 
-            <section className="grid gap-6 md:grid-cols-3">
-              <Stat title="Cars Ahead" value={waiting.length} />
+            <section className="grid gap-6 md:grid-cols-4">
+              <Stat title="Cars Waiting" value={waiting.length} />
               <Stat title="Estimated Wait" value={`${estimatedWaitMinutes} min`} />
-              <Stat title="Tunnel Status" value="OPEN" />
+              <Stat title="Completed Today" value={completed.length} />
+              <Stat title="Tunnel Status" value={inTunnel.length > 0 ? "OPEN" : "READY"} />
             </section>
 
             <section className="rounded-3xl bg-white/10 p-10 text-center">

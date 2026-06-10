@@ -111,7 +111,7 @@ export default function AdminMembersPage() {
     setMessage("")
 
     const cleanPlate = editForm.license_plate
-      ? editForm.license_plate.trim().toUpperCase()
+      ? editForm.license_plate.toString().trim().toUpperCase()
       : ""
 
     if (cleanPlate) {
@@ -190,7 +190,7 @@ export default function AdminMembersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-6 py-8">
+    <main className="min-h-screen bg-slate-950 px-6 py-8 text-white">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -327,9 +327,8 @@ export default function AdminMembersPage() {
                           <option value="Basic">Basic</option>
                           <option value="Plus">Plus</option>
                           <option value="Max">Max</option>
-                          <option value="Gecko Wash Club">
-                            Gecko Wash Club
-                          </option>
+                          <option value="Founding Member">Founding Member</option>
+                          <option value="Gecko Wash Club">Gecko Wash Club</option>
                           <option value="Iguana Wash Club">Iguana Wash Club</option>
                           <option value="Dragon Wash Club">Dragon Wash Club</option>
                         </select>
@@ -348,8 +347,11 @@ export default function AdminMembersPage() {
                           className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                         >
                           <option value="">None</option>
+                          <option value="Active">Active</option>
                           <option value="active">active</option>
                           <option value="inactive">inactive</option>
+                          <option value="paused">paused</option>
+                          <option value="cancelled">cancelled</option>
                           <option value="canceled">canceled</option>
                           <option value="past_due">past_due</option>
                         </select>
@@ -361,6 +363,14 @@ export default function AdminMembersPage() {
                     <td className="px-4 py-3">
                       {isEditing ? (
                         <div className="flex gap-2">
+                          <input
+                            value={editForm.vehicle_color?.toString() ?? ""}
+                            onChange={(e) =>
+                              updateField("vehicle_color", e.target.value)
+                            }
+                            placeholder="Color"
+                            className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
+                          />
                           <input
                             value={editForm.vehicle_make?.toString() ?? ""}
                             onChange={(e) =>
@@ -376,14 +386,6 @@ export default function AdminMembersPage() {
                             }
                             placeholder="Model"
                             className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
-                          />
-                          <input
-                            value={editForm.vehicle_color?.toString() ?? ""}
-                            onChange={(e) =>
-                              updateField("vehicle_color", e.target.value)
-                            }
-                            placeholder="Color"
-                            className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                           />
                         </div>
                       ) : (
@@ -456,12 +458,20 @@ export default function AdminMembersPage() {
                         </div>
                       ) : (
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => startEdit(member)}
+                          <Link
+                            href={`/admin/member/${member.id}`}
                             className="rounded-lg border border-cyan-500/50 px-3 py-2 font-semibold text-cyan-200 hover:bg-cyan-500/10"
                           >
-                            Edit
+                            Profile
+                          </Link>
+
+                          <button
+                            onClick={() => startEdit(member)}
+                            className="rounded-lg border border-yellow-500/50 px-3 py-2 font-semibold text-yellow-200 hover:bg-yellow-500/10"
+                          >
+                            Quick Edit
                           </button>
+
                           <button
                             onClick={() => deleteMember(member.id)}
                             className="rounded-lg border border-red-500/50 px-3 py-2 font-semibold text-red-200 hover:bg-red-500/10"

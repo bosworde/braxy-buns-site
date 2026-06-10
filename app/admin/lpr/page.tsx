@@ -134,6 +134,11 @@ const queueResult = await supabase
     wash_visit_id: washVisit.id,
     license_plate: member.license_plate,
     status: "waiting",
+    member_id: member.id,
+    first_name: member.first_name,
+    membership_plan: member.membership_plan,
+    rewards_points: (member.rewards_points || 0) + 10,
+    lifetime_washes: (member.lifetime_washes || 0) + 1,
   })
 
 console.log("QUEUE RESULT:", queueResult)

@@ -16,7 +16,7 @@ type Lead = {
   follow_up_date: string | null
 }
 
-const statuses = ["New Lead", "Contacted", "Interested", "Joined", "Lost"]
+const statuses = ["New Lead", "Contacted", "Interested", "Joined", "Converted", "Lost"]
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
@@ -74,6 +74,39 @@ export default function LeadsPage() {
     )
   }
 
+  async function convertToMember(lead: Lead) {
+    if (!lead.email) {
+      alert("This lead needs an email before converting to member.")
+      return
+    }
+
+    const confirmed = window.confirm(`Convert ${lead.name || lead.email} to member?`)
+    if (!confirmed) return
+
+    const nameParts = (lead.name || "").trim().split(" ")
+    const firstName = nameParts[0] || null
+    const lastName = nameParts.slice(1).join(" ") || null
+
+    const { error } = await supabase.from("members").insert({
+      email: lead.email.trim().toLowerCase(),
+      first_name: firstName,
+      last_name: lastName,
+     
+      membership_plan: "Founding Member",
+      membership_status: "Active",
+      rewards_points: 0,
+      lifetime_washes: 0,
+    })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    await updateLead(lead.id, { status: "Converted" })
+    alert("Lead converted to member.")
+  }
+
   async function deleteLead(id: string) {
     const confirmed = window.confirm("Delete this lead?")
     if (!confirmed) return
@@ -84,9 +117,9 @@ export default function LeadsPage() {
   }
 
   const newLeads = leads.filter((lead) => lead.status === "New Lead").length
-  const contacted = leads.filter((lead) => lead.status === "Contacted").length
   const interested = leads.filter((lead) => lead.status === "Interested").length
   const joined = leads.filter((lead) => lead.status === "Joined").length
+  const converted = leads.filter((lead) => lead.status === "Converted").length
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -128,7 +161,7 @@ export default function LeadsPage() {
           <Stat title="Total Leads" value={leads.length} />
           <Stat title="New Leads" value={newLeads} />
           <Stat title="Interested" value={interested} />
-          <Stat title="Joined" value={joined} />
+          <Stat title="Converted" value={converted || joined} />
         </section>
 
         <section className="rounded-3xl bg-white/10 p-6">
@@ -228,12 +261,27 @@ export default function LeadsPage() {
                         </td>
 
                         <td className="py-3 pr-4">
-                          <button
-                            onClick={() => deleteLead(lead.id)}
-                            className="rounded-lg border border-red-400 px-3 py-2 font-bold text-red-300"
-                          >
-                            Delete
-                          </button>
+                          <div className="flex flex-wrap gap-2">
+             {lead.status === "Converted" ? (
+  <span className="rounded-lg bg-white/10 px-3 py-2 font-bold text-green-300">
+    Converted
+  </span>
+) : (
+  <button
+    onClick={() => convertToMember(lead)}
+    className="rounded-lg bg-green-400 px-3 py-2 font-bold text-slate-950"
+  >
+    Convert To Member
+  </button>
+)}             
+
+                            <button
+                              onClick={() => deleteLead(lead.id)}
+                              className="rounded-lg border border-red-400 px-3 py-2 font-bold text-red-300"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

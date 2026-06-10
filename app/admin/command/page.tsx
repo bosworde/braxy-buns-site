@@ -20,6 +20,12 @@ const sections = [
     tag: "Money",
   },
   {
+    title: "Sales Dashboard",
+    href: "/admin/sales",
+    description: "MRR, conversion rates, lead funnel, and membership growth.",
+    tag: "Sales",
+  },
+  {
     title: "Operations Center",
     href: "/admin/operations",
     description: "Live wash activity, queue status, and daily operations.",
@@ -103,7 +109,7 @@ export default function CommandCenterPage() {
           </p>
 
           <h2 className="mt-3 text-4xl font-black">
-            Memberships. LPR. Queue. Revenue. Operations. Mission.
+            Memberships. LPR. Queue. Revenue. Sales. Operations. Mission.
           </h2>
 
           <p className="mt-4 text-xl font-bold">
