@@ -160,13 +160,21 @@ export default function AdminPage() {
             QR Check-In
           </Link>
 
-          <Link
-            href="/admin/members"
-            className="rounded-xl bg-white/10 px-5 py-3 font-bold"
-          >
-            Manage Members
-          </Link>
-          <Link
+<Link
+  href="/admin/members"
+  className="rounded-xl bg-white/10 px-5 py-3 font-bold"
+>
+  Manage Members
+</Link>
+
+<Link
+  href="/admin/command"
+  className="rounded-xl bg-yellow-300 px-5 py-3 font-bold text-slate-950"
+>
+  Command Center
+</Link>
+
+<Link
   href="/admin/revenue"
   className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950"
 >
@@ -256,9 +264,9 @@ export default function AdminPage() {
               />
               <StatCard title="This Month's Washes" value={monthlyWashes.length} />
 
-              <StatCard title="Basic Members" value={basicMembers} />
-              <StatCard title="Plus Members" value={plusMembers} />
-              <StatCard title="Max Members" value={maxMembers} />
+              <StatCard title="Gecko Members" value={basicMembers} />
+              <StatCard title="Iguana Members" value={plusMembers} />
+              <StatCard title="Dragon Members" value={maxMembers} />
               <StatCard title="Braxy Bucks Issued" value={totalRewardsPoints} />
 
               <StatCard title="Lifetime Washes" value={lifetimeWashes} />
