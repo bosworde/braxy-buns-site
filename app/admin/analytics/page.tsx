@@ -57,15 +57,15 @@ export default function AnalyticsPage() {
   )
 
   const basic = activeMembers.filter(
-    (m) => m.membership_plan === "Basic Wash Club"
+    (m) => m.membership_plan === "Gecko Wash Club"
   ).length
 
   const plus = activeMembers.filter(
-    (m) => m.membership_plan === "Plus Wash Club"
+    (m) => m.membership_plan === "Iguana Wash Club"
   ).length
 
   const max = activeMembers.filter(
-    (m) => m.membership_plan === "Max Shine Club"
+    (m) => m.membership_plan === "Dragon Wash Club"
   ).length
 
   const currentMRR = basic * 24.99 + plus * 34.99 + max * 44.99
@@ -186,9 +186,9 @@ export default function AnalyticsPage() {
                 </h2>
 
                 <div className="mt-6 space-y-5">
-                  <Bar label="Basic Wash Club" count={basic} total={activeMembers.length} />
-                  <Bar label="Plus Wash Club" count={plus} total={activeMembers.length} />
-                  <Bar label="Max Shine Club" count={max} total={activeMembers.length} />
+                  <Bar label="Gecko Wash Club" count={basic} total={activeMembers.length} />
+                  <Bar label="Iguana Wash Club" count={plus} total={activeMembers.length} />
+                  <Bar label="Dragon Wash Club" count={max} total={activeMembers.length} />
                 </div>
               </div>
 
@@ -237,15 +237,15 @@ function buildMonthData(members: Member[], washes: WashVisit[]): MonthData[] {
     )
 
     const basic = activeByEndOfMonth.filter(
-      (m) => m.membership_plan === "Basic Wash Club"
+      (m) => m.membership_plan === "Gecko Wash Club"
     ).length
 
     const plus = activeByEndOfMonth.filter(
-      (m) => m.membership_plan === "Plus Wash Club"
+      (m) => m.membership_plan === "Iguana Wash Club"
     ).length
 
     const max = activeByEndOfMonth.filter(
-      (m) => m.membership_plan === "Max Shine Club"
+      (m) => m.membership_plan === "Dragon Wash Club"
     ).length
 
     const mrr = basic * 24.99 + plus * 34.99 + max * 44.99

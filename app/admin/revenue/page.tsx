@@ -44,15 +44,15 @@ export default function RevenuePage() {
   )
 
   const geckoCount = activeMembers.filter(
-    (m) => m.membership_plan === "Basic Wash Club"
+    (m) => m.membership_plan === "Gecko Wash Club"
   ).length
 
   const iguanaCount = activeMembers.filter(
-    (m) => m.membership_plan === "Plus Wash Club"
+    (m) => m.membership_plan === "Iguana Wash Club"
   ).length
 
   const dragonCount = activeMembers.filter(
-    (m) => m.membership_plan === "Max Shine Club"
+    (m) => m.membership_plan === "Dragon Wash Club"
   ).length
 
   const geckoMRR = geckoCount * 24.99
@@ -170,24 +170,24 @@ export default function RevenuePage() {
 
             <section className="grid gap-6 lg:grid-cols-3">
               <TierCard
-                title="🦎 Gecko Club"
-                subtitle="Basic Wash Club"
+                title="🦎 Gecko Wash Club"
+                subtitle="Gecko Wash Club"
                 members={geckoCount}
                 mrr={geckoMRR}
                 color="bg-emerald-400"
               />
 
               <TierCard
-                title="🦎 Iguana Club"
-                subtitle="Plus Wash Club"
+                title="🦎 Iguana Wash Club"
+                subtitle="Iguana Wash Club"
                 members={iguanaCount}
                 mrr={iguanaMRR}
                 color="bg-cyan-400"
               />
 
               <TierCard
-                title="🐉 Dragon Club"
-                subtitle="Max Shine Club"
+                title="🐉 Dragon Wash Club"
+                subtitle="Dragon Wash Club"
                 members={dragonCount}
                 mrr={dragonMRR}
                 color="bg-yellow-300"
@@ -201,19 +201,19 @@ export default function RevenuePage() {
 
               <div className="mt-6 space-y-5">
                 <Bar
-                  label="Gecko Club"
+                  label="Gecko Wash Club"
                   count={geckoCount}
                   total={activeMembers.length}
                 />
 
                 <Bar
-                  label="Iguana Club"
+                  label="Iguana Wash Club"
                   count={iguanaCount}
                   total={activeMembers.length}
                 />
 
                 <Bar
-                  label="Dragon Club"
+                  label="Dragon Wash Club"
                   count={dragonCount}
                   total={activeMembers.length}
                 />

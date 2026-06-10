@@ -14,7 +14,7 @@ export default function AddMemberPage() {
   const [vehicleMake, setVehicleMake] = useState("")
   const [vehicleModel, setVehicleModel] = useState("")
   const [vehicleColor, setVehicleColor] = useState("")
-  const [membershipPlan, setMembershipPlan] = useState("Max Shine Club")
+  const [membershipPlan, setMembershipPlan] = useState("Dragon Wash Club")
 
   async function createMember() {
     setMessage("")
@@ -63,7 +63,7 @@ export default function AddMemberPage() {
     setVehicleMake("")
     setVehicleModel("")
     setVehicleColor("")
-    setMembershipPlan("Max Shine Club")
+    setMembershipPlan("Dragon Wash Club")
   }
 
   return (
@@ -157,7 +157,7 @@ export default function AddMemberPage() {
         >
           <option>Basic Shine Club</option>
           <option>Plus Shine Club</option>
-          <option>Max Shine Club</option>
+          <option>Dragon Wash Club</option>
           <option>Family Plan</option>
         </select>
 

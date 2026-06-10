@@ -49,15 +49,15 @@ export default function PaymentsPage() {
   )
 
   const basic = activeMembers.filter(
-    (member) => member.membership_plan === "Basic Wash Club"
+    (member) => member.membership_plan === "Gecko Wash Club"
   ).length
 
   const plus = activeMembers.filter(
-    (member) => member.membership_plan === "Plus Wash Club"
+    (member) => member.membership_plan === "Iguana Wash Club"
   ).length
 
   const max = activeMembers.filter(
-    (member) => member.membership_plan === "Max Shine Club"
+    (member) => member.membership_plan === "Dragon Wash Club"
   ).length
 
   const estimatedMRR = basic * 24.99 + plus * 34.99 + max * 44.99

@@ -73,15 +73,15 @@ export default function AdminPage() {
   )
 
   const basicMembers = activeMembers.filter(
-    (member) => member.membership_plan === "Basic Wash Club"
+    (member) => member.membership_plan === "Gecko Wash Club"
   ).length
 
   const plusMembers = activeMembers.filter(
-    (member) => member.membership_plan === "Plus Wash Club"
+    (member) => member.membership_plan === "Iguana Wash Club"
   ).length
 
   const maxMembers = activeMembers.filter(
-    (member) => member.membership_plan === "Max Shine Club"
+    (member) => member.membership_plan === "Dragon Wash Club"
   ).length
 
   const todaysWashes = washVisits.filter((visit) =>
@@ -288,17 +288,17 @@ export default function AdminPage() {
 
                 <div className="mt-6 space-y-4">
                   <PlanBar
-                    label="Basic Wash Club"
+                    label="Gecko Wash Club"
                     count={basicMembers}
                     total={activeMembers.length}
                   />
                   <PlanBar
-                    label="Plus Wash Club"
+                    label="Iguana Wash Club"
                     count={plusMembers}
                     total={activeMembers.length}
                   />
                   <PlanBar
-                    label="Max Shine Club"
+                    label="Dragon Wash Club"
                     count={maxMembers}
                     total={activeMembers.length}
                   />

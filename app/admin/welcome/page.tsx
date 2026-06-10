@@ -63,38 +63,38 @@ export default function WelcomeScreenPage() {
   const waiting = !showMember || !member?.first_name
 
   const tierImage =
-    member?.membership_plan === "Basic Wash Club"
+    member?.membership_plan === "Gecko Wash Club"
       ? "/gecko.png"
-      : member?.membership_plan === "Plus Wash Club"
+      : member?.membership_plan === "Iguana Wash Club"
       ? "/iguana.png"
       : "/dragon.png"
 
   const tierName =
-    member?.membership_plan === "Basic Wash Club"
-      ? "Gecko Club"
-      : member?.membership_plan === "Plus Wash Club"
-      ? "Iguana Club"
-      : "Dragon Club"
+    member?.membership_plan === "Gecko Wash Club"
+      ? "Gecko Wash Club"
+      : member?.membership_plan === "Iguana Wash Club"
+      ? "Iguana Wash Club"
+      : "Dragon Wash Club"
 
   const tierSubtitle =
-    member?.membership_plan === "Basic Wash Club"
+    member?.membership_plan === "Gecko Wash Club"
       ? "Essential Member"
-      : member?.membership_plan === "Plus Wash Club"
+      : member?.membership_plan === "Iguana Wash Club"
       ? "Plus Member"
       : "Premium Member"
 
 const tierCardClass =
-  member?.membership_plan === "Basic Wash Club"
+  member?.membership_plan === "Gecko Wash Club"
     ? "bg-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]"
-    : member?.membership_plan === "Plus Wash Club"
+    : member?.membership_plan === "Iguana Wash Club"
     ? "bg-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.55)]"
     : "bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 shadow-[0_0_55px_rgba(253,224,71,0.75)]"
   
 
 const tierBackgroundClass =
-  member?.membership_plan === "Basic Wash Club"
+  member?.membership_plan === "Gecko Wash Club"
     ? "from-emerald-900 via-slate-950 to-emerald-950"
-    : member?.membership_plan === "Plus Wash Club"
+    : member?.membership_plan === "Iguana Wash Club"
     ? "from-cyan-900 via-slate-950 to-blue-950"
     : "from-yellow-900 via-slate-950 to-purple-950"
 
@@ -176,7 +176,7 @@ height={380}
 
                 <div>
                   <p className="text-6xl font-black">{tierName}</p>
-                  {member?.membership_plan === "Max Shine Club" && (
+                  {member?.membership_plan === "Dragon Wash Club" && (
   <div className="mt-3 inline-flex items-center rounded-full bg-slate-950 px-6 py-2 text-lg font-black uppercase tracking-[0.2em] text-yellow-300">
     ★ VIP PRIORITY MEMBER
   </div>

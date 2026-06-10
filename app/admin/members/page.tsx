@@ -327,11 +327,11 @@ export default function AdminMembersPage() {
                           <option value="Basic">Basic</option>
                           <option value="Plus">Plus</option>
                           <option value="Max">Max</option>
-                          <option value="Basic Wash Club">
-                            Basic Wash Club
+                          <option value="Gecko Wash Club">
+                            Gecko Wash Club
                           </option>
-                          <option value="Plus Wash Club">Plus Wash Club</option>
-                          <option value="Max Shine Club">Max Shine Club</option>
+                          <option value="Iguana Wash Club">Iguana Wash Club</option>
+                          <option value="Dragon Wash Club">Dragon Wash Club</option>
                         </select>
                       ) : (
                         member.membership_plan || "—"

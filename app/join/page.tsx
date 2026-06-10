@@ -8,14 +8,14 @@ type PlanKey = "basic" | "plus" | "max"
 const plans = {
   basic: {
     name: "Basic",
-    stripeName: "Basic Wash Club",
+    stripeName: "Gecko Wash Club",
     price: "$24.99/mo",
     description: "A fast, reliable premium tunnel wash for everyday shine.",
     features: ["Exterior wash", "Dry", "Free vacuums"],
   },
   plus: {
     name: "Plus",
-    stripeName: "Plus Wash Club",
+    stripeName: "Iguana Wash Club",
     price: "$34.99/mo",
     description:
       "Extra finish and detail for drivers who want a deeper clean and brighter finish.",
@@ -23,7 +23,7 @@ const plans = {
   },
   max: {
     name: "Max",
-    stripeName: "Max Shine Club",
+    stripeName: "Dragon Wash Club",
     price: "$44.99/mo",
     description:
       "Our premium unlimited plan with top-tier protection and the best overall value.",

@@ -261,9 +261,9 @@ export default function AdminMemberDetailPage() {
                 onChange={(e) => updateField("membership_plan", e.target.value)}
               >
                 <option>Prospect</option>
-                <option>Basic Wash Club</option>
-                <option>Plus Wash Club</option>
-                <option>Max Shine Club</option>
+                <option>Gecko Wash Club</option>
+                <option>Iguana Wash Club</option>
+                <option>Dragon Wash Club</option>
               </select>
             </div>
 

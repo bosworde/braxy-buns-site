@@ -13,9 +13,9 @@ type Member = {
 }
 
 const PRICES: Record<string, number> = {
-  "Basic Wash Club": 24.99,
-  "Plus Wash Club": 34.99,
-  "Max Shine Club": 44.99,
+  "Gecko Wash Club": 24.99,
+  "Iguana Wash Club": 34.99,
+  "Dragon Wash Club": 44.99,
 }
 
 export default function FounderPage() {

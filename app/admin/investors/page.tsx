@@ -34,15 +34,15 @@ export default function InvestorDashboardPage() {
   )
 
   const basic = activeMembers.filter(
-    (m) => m.membership_plan === "Basic Wash Club"
+    (m) => m.membership_plan === "Gecko Wash Club"
   ).length
 
   const plus = activeMembers.filter(
-    (m) => m.membership_plan === "Plus Wash Club"
+    (m) => m.membership_plan === "Iguana Wash Club"
   ).length
 
   const max = activeMembers.filter(
-    (m) => m.membership_plan === "Max Shine Club"
+    (m) => m.membership_plan === "Dragon Wash Club"
   ).length
 
   const currentMRR = basic * 24.99 + plus * 34.99 + max * 44.99

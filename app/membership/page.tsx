@@ -7,17 +7,17 @@ import { useRouter } from "next/navigation"
 
 const plans = [
   {
-    name: "Basic Wash Club",
+    name: "Gecko Wash Club",
     price: "$24.99/mo",
     description: "Great for routine exterior washes.",
   },
   {
-    name: "Plus Wash Club",
+    name: "Iguana Wash Club",
     price: "$34.99/mo",
     description: "Our best everyday value with upgraded shine.",
   },
   {
-    name: "Max Shine Club",
+    name: "Dragon Wash Club",
     price: "$44.99/mo",
     description: "Premium wash experience with our top package.",
   },

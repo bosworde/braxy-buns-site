@@ -2,9 +2,9 @@ import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 
 const priceMap: Record<string, string> = {
-  "Basic Wash Club": "price_1TezMO193rp9H3JHdrEW84XD",
-  "Plus Wash Club": "price_1TezNT193rp9H3JHptxSYLaJ",
-  "Max Shine Club": "price_1TezO8193rp9H3JHyzHPvkOH",
+  "Gecko Wash Club": "price_1TezMO193rp9H3JHdrEW84XD",
+  "Iguana Wash Club": "price_1TezNT193rp9H3JHptxSYLaJ",
+  "Dragon Wash Club": "price_1TezO8193rp9H3JHyzHPvkOH",
 }
 
 export async function POST(request: Request) {
