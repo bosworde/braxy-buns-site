@@ -162,7 +162,28 @@ export default function LeadsPage() {
           <Stat title="New Leads" value={newLeads} />
           <Stat title="Interested" value={interested} />
           <Stat title="Converted" value={converted || joined} />
+          <Stat title="Founding Members" value={`${converted}/500`} />
         </section>
+        <section className="rounded-3xl bg-white/10 p-6">
+  <div className="flex justify-between">
+    <p className="font-black">Founding Member Goal</p>
+    <p className="font-black text-cyan-300">
+      {converted}/500
+    </p>
+  </div>
+
+  <div className="mt-4 h-6 rounded-full bg-slate-800">
+    <div
+      className="h-6 rounded-full bg-cyan-400"
+      style={{
+        width: `${Math.min(
+          100,
+          Math.round((converted / 500) * 100)
+        )}%`,
+      }}
+    />
+  </div>
+</section>
 
         <section className="rounded-3xl bg-white/10 p-6">
           <h2 className="text-2xl font-black">Add Lead</h2>
