@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
@@ -91,6 +90,15 @@ export default function TunnelScreenPage() {
       ? "/gecko-tunnel.png"
       : "/dragon-tunnel.png"
 
+  const planColor =
+    nowEntering?.membership_plan === "Dragon Wash Club"
+      ? "text-yellow-300"
+      : nowEntering?.membership_plan === "Iguana Wash Club"
+      ? "text-cyan-300"
+      : nowEntering?.membership_plan === "Gecko Wash Club"
+      ? "text-green-300"
+      : "text-yellow-300"
+
   return (
     <main className="min-h-screen bg-slate-950 px-8 py-8 text-white">
       <div className="mx-auto max-w-7xl space-y-5">
@@ -129,72 +137,77 @@ export default function TunnelScreenPage() {
         ) : (
           <>
             <section className="rounded-[2rem] border border-cyan-400/30 bg-white/10 px-10 py-6 text-center overflow-hidden">
-              <p className="text-xl font-black uppercase tracking-[0.4em] text-cyan-300">
-                Welcome Back
-              </p>
-
               {nowEntering ? (
                 <>
-                  <div className="-mt-10 flex h-[500px] justify-center overflow-hidden">
-                    <Image
+                  <p className="text-xl font-black uppercase tracking-[0.4em] text-cyan-300">
+                    Welcome Back
+                  </p>
+
+               <div className="-mt-2 flex h-[280px] justify-center overflow-hidden rounded-xl bg-black">
+                    <img
                       src={planImage}
                       alt="Membership Tier"
-                      width={1920}
-                      height={1080}
-                      className="h-full w-full object-contain drop-shadow-2xl"
-                      priority
+                     className="h-[900px] w-[1800px] -translate-y-[260px] scale-[1.05] object-cover"
                     />
                   </div>
 
-                  <p className="-mt-4 text-2xl font-black uppercase tracking-[0.35em] text-cyan-300">
+                  <p className="mt-4 text-2xl font-black uppercase tracking-[0.35em] text-cyan-300">
                     {nowEntering.license_plate || "No Plate"}
                   </p>
 
-                  <h2 className="mt-2 text-8xl font-black leading-none text-white">
+                  <h2 className="mt-1 text-9xl font-black leading-none text-white drop-shadow-[0_0_25px_rgba(34,211,238,0.7)]">
                     {nowEntering.first_name || "Member"}
                   </h2>
 
-                  <div className="mx-auto mt-4 h-[3px] max-w-xl rounded-full bg-cyan-400 shadow-[0_0_25px_#22d3ee]" />
+                  <div className="mx-auto mt-4 h-[3px] max-w-2xl rounded-full bg-cyan-400 shadow-[0_0_25px_#22d3ee]" />
 
-                  <p className="mt-5 text-5xl font-black text-cyan-300">
+                  <p className={`mt-5 text-6xl font-black ${planColor}`}>
                     {nowEntering.membership_plan || "Membership"}
                   </p>
 
-                  <div className="mt-8 flex justify-center gap-20 text-2xl">
-                    <div>
-                      <p className="text-slate-400">Braxy Bucks</p>
-                      <p className="text-5xl font-black text-white">
+                  <div className="mt-8 grid gap-5 md:grid-cols-2">
+                    <div className="rounded-3xl border border-white/10 bg-white/10 p-6">
+                      <p className="text-sm font-black uppercase tracking-[0.35em] text-slate-400">
+                        Braxy Bucks
+                      </p>
+                      <p className="mt-2 text-6xl font-black text-white">
                         {nowEntering.rewards_points || 0}
                       </p>
                     </div>
 
-                    <div className="border-l border-white/30 pl-20">
-                      <p className="text-slate-400">Lifetime Washes</p>
-                      <p className="text-5xl font-black text-white">
+                    <div className="rounded-3xl border border-white/10 bg-white/10 p-6">
+                      <p className="text-sm font-black uppercase tracking-[0.35em] text-slate-400">
+                        Lifetime Washes
+                      </p>
+                      <p className="mt-2 text-6xl font-black text-white">
                         {nowEntering.lifetime_washes || 0}
                       </p>
                     </div>
                   </div>
                 </>
-             ) : (
-  <>
-    <div className="-mt-4 flex h-[360px] justify-center overflow-hidden rounded-xl bg-black">
-     <img
-  src="/dragon-tunnel.png"
-  alt="Dragon tunnel welcome"
- className="h-[1200px] w-[2200px] -translate-y-[360px] scale-[1.2] object-cover"
-/>
-    </div>
+              ) : (
+                <>
+                  <p className="text-xl font-black uppercase tracking-[0.4em] text-cyan-300">
+                    Welcome Back
+                  </p>
 
-  <h2 className="-mt-6 text-9xl font-black text-yellow-300 drop-shadow-[0_0_25px_rgba(253,224,71,0.8)]">
-      READY
-    </h2>
+                  <div className="-mt-4 flex h-[360px] justify-center overflow-hidden rounded-xl bg-black">
+                    <img
+                      src="/dragon-tunnel.png"
+                      alt="Dragon tunnel welcome"
+                      className="h-[1200px] w-[2200px] -translate-y-[360px] scale-[1.2] object-cover"
+                    />
+                  </div>
 
-    <p className="mt-3 text-3xl font-bold text-white/80">
-  Awaiting Next Vehicle
-</p>
-  </>
-)}
+                  <h2 className="-mt-6 text-9xl font-black text-yellow-300 drop-shadow-[0_0_25px_rgba(253,224,71,0.8)]">
+                    READY
+                  </h2>
+
+                  <p className="mt-3 text-3xl font-bold text-white/80">
+                    Awaiting Next Vehicle
+                  </p>
+                </>
+              )}
             </section>
 
             <section className="grid gap-4 md:grid-cols-5">
@@ -222,7 +235,11 @@ export default function TunnelScreenPage() {
                 </p>
               </div>
 
-              <div className="rounded-3xl bg-green-400 p-6 text-slate-950">
+              <div
+                className={`rounded-3xl p-6 text-slate-950 ${
+                  inTunnel.length > 0 ? "bg-cyan-300" : "bg-green-400"
+                }`}
+              >
                 <p className="text-sm font-black uppercase tracking-[0.35em]">
                   Tunnel Status
                 </p>
