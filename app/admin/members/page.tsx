@@ -106,6 +106,68 @@ export default function AdminMembersPage() {
     }))
   }
 
+  async function quickStatus(id: string, status: string) {
+    setLoading(true)
+    setMessage("")
+
+    const { error } = await supabase
+      .from("members")
+      .update({ membership_status: status })
+      .eq("id", id)
+
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setMessage(`Member status changed to ${status}.`)
+      await loadMembers()
+    }
+
+    setLoading(false)
+  }
+
+  async function quickPlan(id: string, plan: string) {
+    setLoading(true)
+    setMessage("")
+
+    const { error } = await supabase
+      .from("members")
+      .update({
+        membership_plan: plan,
+        membership_status: "active",
+      })
+      .eq("id", id)
+
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setMessage(`Member plan changed to ${plan}.`)
+      await loadMembers()
+    }
+
+    setLoading(false)
+  }
+
+  async function addBonusPoints(id: string, currentPoints: number | null, pointsToAdd: number) {
+    setLoading(true)
+    setMessage("")
+
+    const { error } = await supabase
+      .from("members")
+      .update({
+        rewards_points: Number(currentPoints ?? 0) + pointsToAdd,
+      })
+      .eq("id", id)
+
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setMessage(`${pointsToAdd} Braxy Bucks added.`)
+      await loadMembers()
+    }
+
+    setLoading(false)
+  }
+
   async function saveMember(id: string) {
     setLoading(true)
     setMessage("")
@@ -197,9 +259,9 @@ export default function AdminMembersPage() {
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">
               Braxy Buns Admin
             </p>
-            <h1 className="mt-2 text-3xl font-bold">Members</h1>
+            <h1 className="mt-2 text-3xl font-bold">Membership Management</h1>
             <p className="mt-2 text-slate-300">
-              Search, edit, and manage wash club members.
+              Search, edit, upgrade, pause, cancel, and reactivate wash club members.
             </p>
           </div>
 
@@ -250,7 +312,7 @@ export default function AdminMembersPage() {
         )}
 
         <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
-          <table className="w-full min-w-[1100px] text-left text-sm">
+          <table className="w-full min-w-[1350px] text-left text-sm">
             <thead className="border-b border-slate-800 bg-slate-950/60 text-xs uppercase tracking-wider text-slate-400">
               <tr>
                 <th className="px-4 py-3">Name</th>
@@ -261,6 +323,7 @@ export default function AdminMembersPage() {
                 <th className="px-4 py-3">Plate</th>
                 <th className="px-4 py-3">Points</th>
                 <th className="px-4 py-3">Washes</th>
+                <th className="px-4 py-3">Quick Manage</th>
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -276,17 +339,13 @@ export default function AdminMembersPage() {
                         <div className="flex gap-2">
                           <input
                             value={editForm.first_name?.toString() ?? ""}
-                            onChange={(e) =>
-                              updateField("first_name", e.target.value)
-                            }
+                            onChange={(e) => updateField("first_name", e.target.value)}
                             placeholder="First"
                             className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                           />
                           <input
                             value={editForm.last_name?.toString() ?? ""}
-                            onChange={(e) =>
-                              updateField("last_name", e.target.value)
-                            }
+                            onChange={(e) => updateField("last_name", e.target.value)}
                             placeholder="Last"
                             className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                           />
@@ -294,9 +353,7 @@ export default function AdminMembersPage() {
                       ) : (
                         <span className="font-semibold">
                           {member.first_name || member.last_name
-                            ? `${member.first_name ?? ""} ${
-                                member.last_name ?? ""
-                              }`
+                            ? `${member.first_name ?? ""} ${member.last_name ?? ""}`
                             : "—"}
                         </span>
                       )}
@@ -318,22 +375,19 @@ export default function AdminMembersPage() {
                       {isEditing ? (
                         <select
                           value={editForm.membership_plan?.toString() ?? ""}
-                          onChange={(e) =>
-                            updateField("membership_plan", e.target.value)
-                          }
+                          onChange={(e) => updateField("membership_plan", e.target.value)}
                           className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                         >
                           <option value="">None</option>
-                          <option value="Basic">Basic</option>
-                          <option value="Plus">Plus</option>
-                          <option value="Max">Max</option>
-                          <option value="Founding Member">Founding Member</option>
                           <option value="Gecko Wash Club">Gecko Wash Club</option>
                           <option value="Iguana Wash Club">Iguana Wash Club</option>
                           <option value="Dragon Wash Club">Dragon Wash Club</option>
+                          <option value="Founding Member">Founding Member</option>
                         </select>
                       ) : (
-                        member.membership_plan || "—"
+                        <span className="font-bold text-cyan-300">
+                          {member.membership_plan || "—"}
+                        </span>
                       )}
                     </td>
 
@@ -341,22 +395,29 @@ export default function AdminMembersPage() {
                       {isEditing ? (
                         <select
                           value={editForm.membership_status?.toString() ?? ""}
-                          onChange={(e) =>
-                            updateField("membership_status", e.target.value)
-                          }
+                          onChange={(e) => updateField("membership_status", e.target.value)}
                           className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                         >
                           <option value="">None</option>
-                          <option value="Active">Active</option>
                           <option value="active">active</option>
-                          <option value="inactive">inactive</option>
                           <option value="paused">paused</option>
                           <option value="cancelled">cancelled</option>
-                          <option value="canceled">canceled</option>
                           <option value="past_due">past_due</option>
                         </select>
                       ) : (
-                        member.membership_status || "—"
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
+                            member.membership_status === "active"
+                              ? "bg-green-400 text-slate-950"
+                              : member.membership_status === "paused"
+                              ? "bg-yellow-400 text-slate-950"
+                              : member.membership_status === "cancelled"
+                              ? "bg-red-500 text-white"
+                              : "bg-white/10 text-slate-300"
+                          }`}
+                        >
+                          {member.membership_status || "—"}
+                        </span>
                       )}
                     </td>
 
@@ -365,33 +426,27 @@ export default function AdminMembersPage() {
                         <div className="flex gap-2">
                           <input
                             value={editForm.vehicle_color?.toString() ?? ""}
-                            onChange={(e) =>
-                              updateField("vehicle_color", e.target.value)
-                            }
+                            onChange={(e) => updateField("vehicle_color", e.target.value)}
                             placeholder="Color"
                             className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                           />
                           <input
                             value={editForm.vehicle_make?.toString() ?? ""}
-                            onChange={(e) =>
-                              updateField("vehicle_make", e.target.value)
-                            }
+                            onChange={(e) => updateField("vehicle_make", e.target.value)}
                             placeholder="Make"
                             className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                           />
                           <input
                             value={editForm.vehicle_model?.toString() ?? ""}
-                            onChange={(e) =>
-                              updateField("vehicle_model", e.target.value)
-                            }
+                            onChange={(e) => updateField("vehicle_model", e.target.value)}
                             placeholder="Model"
                             className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                           />
                         </div>
                       ) : (
-                        `${member.vehicle_color ?? ""} ${
-                          member.vehicle_make ?? ""
-                        } ${member.vehicle_model ?? ""}`.trim() || "—"
+                        `${member.vehicle_color ?? ""} ${member.vehicle_make ?? ""} ${
+                          member.vehicle_model ?? ""
+                        }`.trim() || "—"
                       )}
                     </td>
 
@@ -399,13 +454,13 @@ export default function AdminMembersPage() {
                       {isEditing ? (
                         <input
                           value={editForm.license_plate?.toString() ?? ""}
-                          onChange={(e) =>
-                            updateField("license_plate", e.target.value)
-                          }
+                          onChange={(e) => updateField("license_plate", e.target.value)}
                           className="w-28 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 uppercase text-white"
                         />
                       ) : (
-                        member.license_plate || "—"
+                        <span className="font-black text-white">
+                          {member.license_plate || "—"}
+                        </span>
                       )}
                     </td>
 
@@ -414,9 +469,7 @@ export default function AdminMembersPage() {
                         <input
                           type="number"
                           value={editForm.rewards_points?.toString() ?? "0"}
-                          onChange={(e) =>
-                            updateField("rewards_points", e.target.value)
-                          }
+                          onChange={(e) => updateField("rewards_points", e.target.value)}
                           className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                         />
                       ) : (
@@ -429,14 +482,74 @@ export default function AdminMembersPage() {
                         <input
                           type="number"
                           value={editForm.lifetime_washes?.toString() ?? "0"}
-                          onChange={(e) =>
-                            updateField("lifetime_washes", e.target.value)
-                          }
+                          onChange={(e) => updateField("lifetime_washes", e.target.value)}
                           className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-white"
                         />
                       ) : (
                         member.lifetime_washes ?? 0
                       )}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => quickStatus(member.id, "active")}
+                          disabled={loading}
+                          className="rounded-lg bg-green-400 px-3 py-2 text-xs font-black text-slate-950 disabled:opacity-50"
+                        >
+                          Activate
+                        </button>
+
+                        <button
+                          onClick={() => quickStatus(member.id, "paused")}
+                          disabled={loading}
+                          className="rounded-lg bg-yellow-400 px-3 py-2 text-xs font-black text-slate-950 disabled:opacity-50"
+                        >
+                          Pause
+                        </button>
+
+                        <button
+                          onClick={() => quickStatus(member.id, "cancelled")}
+                          disabled={loading}
+                          className="rounded-lg bg-red-500 px-3 py-2 text-xs font-black text-white disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          onClick={() => quickPlan(member.id, "Gecko Wash Club")}
+                          disabled={loading}
+                          className="rounded-lg border border-green-400/50 px-3 py-2 text-xs font-black text-green-300 hover:bg-green-400/10 disabled:opacity-50"
+                        >
+                          Gecko
+                        </button>
+
+                        <button
+                          onClick={() => quickPlan(member.id, "Iguana Wash Club")}
+                          disabled={loading}
+                          className="rounded-lg border border-cyan-400/50 px-3 py-2 text-xs font-black text-cyan-300 hover:bg-cyan-400/10 disabled:opacity-50"
+                        >
+                          Iguana
+                        </button>
+
+                        <button
+                          onClick={() => quickPlan(member.id, "Dragon Wash Club")}
+                          disabled={loading}
+                          className="rounded-lg border border-yellow-400/50 px-3 py-2 text-xs font-black text-yellow-300 hover:bg-yellow-400/10 disabled:opacity-50"
+                        >
+                          Dragon
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            addBonusPoints(member.id, member.rewards_points, 10)
+                          }
+                          disabled={loading}
+                          className="rounded-lg border border-purple-400/50 px-3 py-2 text-xs font-black text-purple-300 hover:bg-purple-400/10 disabled:opacity-50"
+                        >
+                          +10 Bucks
+                        </button>
+                      </div>
                     </td>
 
                     <td className="px-4 py-3">
@@ -469,7 +582,7 @@ export default function AdminMembersPage() {
                             onClick={() => startEdit(member)}
                             className="rounded-lg border border-yellow-500/50 px-3 py-2 font-semibold text-yellow-200 hover:bg-yellow-500/10"
                           >
-                            Quick Edit
+                            Edit
                           </button>
 
                           <button
@@ -487,7 +600,7 @@ export default function AdminMembersPage() {
 
               {!loading && filteredMembers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                     No members found.
                   </td>
                 </tr>
