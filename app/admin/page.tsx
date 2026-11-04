@@ -118,6 +118,7 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
       <BillingAlerts />
+      <Link href="/admin/preopening" className="my-5 inline-block rounded-xl border border-cyan-300/40 px-5 py-3 font-bold text-cyan-200">View free pre-opening registrations →</Link>
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>

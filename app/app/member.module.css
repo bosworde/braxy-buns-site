@@ -20,3 +20,5 @@
 .plans .price{margin:12px 0 24px}
 .plans ul{text-align:left}
 @media(max-width:760px){.plans .card h2,.plans .card>p{min-height:0}}
+
+.fullWidth{grid-column:1/-1}.app select{padding:13px;border:1px solid #ffffff33;border-radius:7px;background:#061426;color:#fff;width:100%;font:inherit}.app label small{color:var(--muted);font-weight:400}.acknowledgement{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:12px!important;line-height:1.65;margin:20px 0}.app .acknowledgement input{width:18px;height:18px;margin-top:3px;flex-shrink:0}.app .note a{text-decoration:underline}.topbar button{font-size:14px;min-height:44px}.app button:disabled{opacity:.6;cursor:not-allowed}
