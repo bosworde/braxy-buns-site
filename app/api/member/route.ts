@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     let billingSyncUnavailable = false
     if (stripe_customer_id && stripe_subscription_id) {
       try {
-        const subscription = await stripeClient().subscriptions.retrieve(stripe_subscription_id)
+        const subscription = await stripeClient().subscriptions.retrieve(stripe_subscription_id, { expand: ["latest_invoice"] })
         if (objectId(subscription.customer) !== stripe_customer_id) throw new Error("Customer mismatch")
         const current = membershipState(subscription)
         profile.membership_status = current.status

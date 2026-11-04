@@ -51,3 +51,17 @@ test('reward progress remains finite at and above the final milestone', () => {
   }
   assert.equal(rewardProgress(500).percent, 100);
 });
+
+test('member refresh expands the invoice and preserves a paid active pass', async () => {
+  const { MemberError } = authModule({});
+  let options;
+  const subscription = { customer: 'cus_owner', status: 'active', latest_invoice: { status: 'paid' }, items: { data: [{ price: { id: 'price_1TezMO193rp9H3JHdrEW84XD' } }] } };
+  const stripe = moduleFrom('lib/billing/stripe.ts', { stripe: {}, '@/lib/member/server': { MemberError } });
+  const db = { from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }) }) }) };
+  const billing = { ...stripe, stripeClient: () => ({ subscriptions: { retrieve: async (id, args) => { options = args; return args?.expand?.includes('latest_invoice') ? subscription : { ...subscription, latest_invoice: 'in_unexpanded' } } } }) };
+  const route = moduleFrom('app/api/member/route.ts', { 'next/server': next, '@/lib/member/server': { MemberError, authenticatedMember: async () => ({ db, member: { id: 'owner', stripe_customer_id: 'cus_owner', stripe_subscription_id: 'sub_owner', membership_status: 'active' } }) }, '@/lib/billing/stripe': billing });
+  const response = await route.GET(new Request('https://example.com/api/member'));
+  assert.equal(options.expand[0], 'latest_invoice');
+  assert.equal(response.body.member.membership_status, 'active');
+  assert.equal(response.body.member.stripe_customer_id, undefined);
+});

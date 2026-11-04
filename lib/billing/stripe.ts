@@ -21,8 +21,8 @@ export function stripeClient() {
   return new Stripe(key, { maxNetworkRetries: 2, timeout: 15000 })
 }
 export function siteOrigin() {
-  const value = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_SITE_URL || "https://braxybuns.com"
+  const value = process.env.VERCEL_ENV === "preview" && (process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL)
+    ? `https://${process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_SITE_URL || "https://braxybuns.com"
   const url = new URL(value)
   if (url.protocol !== "https:" && url.hostname !== "localhost") throw new MemberError("Billing configuration needs attention.", 503)
   return url.origin
