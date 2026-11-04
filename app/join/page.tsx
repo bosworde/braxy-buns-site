@@ -196,7 +196,7 @@ export default function JoinPage() {
                 {selected.features.map((feature) => (
                   <div
                     key={feature}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80"
                   >
                     • {feature}
                   </div>
@@ -236,28 +236,28 @@ export default function JoinPage() {
             {!memberEmail && <p className="mt-4 text-cyan-300"><Link href="/app">Sign in securely in the Member App</Link> before starting your membership.</p>}
             <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-sm">
+                <label className="grid min-w-0 gap-2 text-sm">
                   <span className="text-white/80">First Name</span>
                   <input
                     required
                     name="firstName"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                     placeholder="Dennis"
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm">
+                <label className="grid min-w-0 gap-2 text-sm">
                   <span className="text-white/80">Last Name</span>
                   <input
                     required
                     name="lastName"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                     placeholder="Bosworth"
                   />
                 </label>
               </div>
 
-              <label className="grid gap-2 text-sm">
+              <label className="grid min-w-0 gap-2 text-sm">
                 <span className="text-white/80">Email</span>
                 <input
                   required
@@ -265,47 +265,47 @@ export default function JoinPage() {
                   name="email"
                   value={memberEmail}
                   readOnly
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                  className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                   placeholder="you@example.com"
                 />
               </label>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-sm">
+                <label className="grid min-w-0 gap-2 text-sm">
                   <span className="text-white/80">License Plate</span>
                   <input
                     required
                     name="plate"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 uppercase text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 uppercase text-white outline-none placeholder:text-white/35 focus:border-white/30"
                     placeholder="ABC1234"
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm">
+                <label className="grid min-w-0 gap-2 text-sm">
                   <span className="text-white/80">Vehicle Color</span>
                   <input
                     name="vehicleColor"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                     placeholder="Black"
                   />
                 </label>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-sm">
+                <label className="grid min-w-0 gap-2 text-sm">
                   <span className="text-white/80">Vehicle Make</span>
                   <input
                     name="vehicleMake"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                     placeholder="Ford"
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm">
+                <label className="grid min-w-0 gap-2 text-sm">
                   <span className="text-white/80">Vehicle Model</span>
                   <input
                     name="vehicleModel"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
+                    className="min-w-0 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                     placeholder="F-150"
                   />
                 </label>

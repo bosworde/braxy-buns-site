@@ -59,6 +59,10 @@ export async function POST(req: Request) {
     const plate = result?.results?.[0]?.plate || ""
     const confidence = result?.results?.[0]?.score || 0
 
+    if (result?.results?.length !== 1 || confidence < 0.9) {
+      return NextResponse.json({ error: "Plate is uncertain or multiple plates were detected. Confirm the plate manually before lookup." }, { status: 422 })
+    }
+
     return NextResponse.json({
       plate,
       confidence,

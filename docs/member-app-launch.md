@@ -1,3 +1,5 @@
+> Current readiness findings: [November 4 launch verification](launch-verification-2026-11-04.md). That report supersedes historical access and setup blockers below.
+
 # Braxy Buns member app
 
 The member experience is integrated into the existing Next.js site at `/app`. It does not need another domain, website, database, or Stripe account. The public homepage and shared site navigation now link to it. Existing `/account`, `/dashboard`, `/qr-pass`, and `/rewards` URLs redirect into the app.

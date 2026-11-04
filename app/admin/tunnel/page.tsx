@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { verifyAdmission } from "@/lib/member/admission"
 import { supabase } from "@/lib/supabase"
 
 type Member = {
@@ -64,98 +65,13 @@ export default function TunnelPage() {
 
   async function startWash() {
     if (!member) return
-
-    setLoading(true)
-    setMessage("")
-
-    if (member.membership_status !== "active") {
-      setMessage("Membership is not active.")
-      setLoading(false)
-      return
-    }
-
-    const today = new Date().toISOString().slice(0, 10)
-
-    const { data: existingWash, error: existingError } = await supabase
-      .from("wash_visits")
-      .select("id")
-      .eq("member_id", member.id)
-      .gte("created_at", `${today}T00:00:00`)
-      .lte("created_at", `${today}T23:59:59`)
-      .maybeSingle()
-
-    if (existingError) {
-      setMessage(existingError.message)
-      setLoading(false)
-      return
-    }
-
-    if (existingWash) {
-      setMessage("This member already washed today.")
-      setLoading(false)
-      return
-    }
-
-    const { error: visitError } = await supabase.from("wash_visits").insert({
-      member_id: member.id,
-      email: member.email,
-      membership_plan: member.membership_plan,
-      license_plate: member.license_plate,
-    })
-
-    if (visitError) {
-      setMessage(visitError.message)
-      setLoading(false)
-      return
-    }
-
-    const newPoints = (member.rewards_points || 0) + 10
-    const newWashes = (member.lifetime_washes || 0) + 1
-
-    const { error: updateError } = await supabase
-      .from("members")
-      .update({
-        rewards_points: newPoints,
-        lifetime_washes: newWashes,
-      })
-      .eq("id", member.id)
-
-    if (updateError) {
-      setMessage(updateError.message)
-      setLoading(false)
-      return
-    }
-
-    const { error: welcomeError } = await supabase
-      .from("welcome_screen")
-      .upsert({
-        id: "current",
-        member_id: member.id,
-        first_name: member.first_name,
-        last_name: member.last_name,
-        email: member.email,
-        membership_plan: member.membership_plan,
-        license_plate: member.license_plate,
-        rewards_points: newPoints,
-        lifetime_washes: newWashes,
-        updated_at: new Date().toISOString(),
-      })
-
-    if (welcomeError) {
-      setMessage(welcomeError.message)
-      setLoading(false)
-      return
-    }
-
-    setMember({
-      ...member,
-      rewards_points: newPoints,
-      lifetime_washes: newWashes,
-    })
-
-    setCheckedIn(true)
-    setMessage("Wash started. Member checked in successfully.")
-    setLoading(false)
+    setMessage("Verifying current payment and recording admission…")
+    try {
+      const result = await verifyAdmission(member.id, true)
+      setMember({ ...member, rewards_points: result.rewards_points, lifetime_washes: result.lifetime_washes })
+      setMessage("Admission recorded. +10 Braxy Bucks awarded. Follow the attendant’s instructions; no equipment was activated.")
+      setCheckedIn(true)
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Verification unavailable. Do not admit.") }
   }
 
   const fullName = member
@@ -283,7 +199,7 @@ export default function TunnelPage() {
                 }
                 className="mt-8 w-full rounded-2xl bg-cyan-400 px-8 py-5 text-2xl font-black text-slate-950 hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {checkedIn ? "WASH STARTED" : "START WASH"}
+                {checkedIn ? "ADMISSION RECORDED" : "VERIFY & RECORD ADMISSION"}
               </button>
             </div>
 
@@ -305,7 +221,7 @@ export default function TunnelPage() {
 
                 {checkedIn && (
                   <p className="mt-8 text-3xl font-black">
-                    PLEASE ENTER THE TUNNEL
+                    FOLLOW ATTENDANT INSTRUCTIONS
                   </p>
                 )}
               </div>
