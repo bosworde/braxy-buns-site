@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { verifyAdmission } from "@/lib/member/admission"
 import { supabase } from "@/lib/supabase"
 
 type Member = {
@@ -31,6 +32,7 @@ export default function LprCameraPage() {
   }
 
   function handleImageChange(file: File | null) {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
     setImageFile(file)
     setDetectedPlate("")
     setMember(null)
@@ -65,12 +67,16 @@ export default function LprCameraPage() {
     setMessage("")
     setMember(null)
 
+    try {
     const formData = new FormData()
     formData.append("image", imageFile)
 
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setMessage("Please sign in again."); setScanLoading(false); return }
     const response = await fetch("/api/lpr-scan", {
       method: "POST",
       body: formData,
+      headers: { Authorization: `Bearer ${session.access_token}` },
     })
 
     const result = await response.json()
@@ -91,6 +97,8 @@ export default function LprCameraPage() {
     setScanLoading(false)
 
     await lookupPlate(result.plate)
+    } catch { setMessage("Scan unavailable. Try again or confirm the plate manually.") }
+    finally { setScanLoading(false) }
   }
 
   async function lookupPlate(value?: string) {
@@ -125,49 +133,13 @@ export default function LprCameraPage() {
 
   async function approveWash() {
     if (!member) return
+    setMessage("Verifying current payment and recording admission…")
+    try {
+      const result = await verifyAdmission(member.id, true)
+      setMember({ ...member, rewards_points: result.rewards_points, lifetime_washes: result.lifetime_washes })
+      setMessage("Admission recorded. +10 Braxy Bucks awarded. Follow the attendant’s instructions; no equipment was activated.")
 
-    if (member.membership_status !== "active") {
-      setMessage("Member is not active. Do not approve wash.")
-      return
-    }
-
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-
-    const { data: existingWash } = await supabase
-      .from("wash_visits")
-      .select("id")
-      .eq("member_id", member.id)
-      .gte("created_at", todayStart.toISOString())
-      .maybeSingle()
-
-    if (existingWash) {
-      setMessage("This member already washed today.")
-      return
-    }
-
-    await supabase.from("wash_visits").insert({
-      member_id: member.id,
-      email: member.email,
-      membership_plan: member.membership_plan,
-      license_plate: member.license_plate,
-    })
-
-    await supabase
-      .from("members")
-      .update({
-        rewards_points: (member.rewards_points || 0) + 10,
-        lifetime_washes: (member.lifetime_washes || 0) + 1,
-      })
-      .eq("id", member.id)
-
-    setMessage("Wash approved. +10 Braxy Bucks added.")
-
-    setMember({
-      ...member,
-      rewards_points: (member.rewards_points || 0) + 10,
-      lifetime_washes: (member.lifetime_washes || 0) + 1,
-    })
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Verification unavailable. Do not admit.") }
   }
 
   const fullName = member
@@ -304,7 +276,7 @@ export default function LprCameraPage() {
 
               <h2 className="mt-3 text-5xl font-black">
                 {member.membership_status === "active"
-                  ? "APPROVED"
+                  ? "MEMBER MATCHED — VERIFY AT CHECK-IN"
                   : "DO NOT WASH"}
               </h2>
             </div>

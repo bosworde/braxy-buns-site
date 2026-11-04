@@ -69,6 +69,7 @@ const brand = {
 };
 
 const nav = [
+  { label: "Member App", href: "/app" },
   { label: "Services", href: "#services" },
   { label: "Technology", href: "#technology" },
   { label: "Future Location", href: "/future-location" },

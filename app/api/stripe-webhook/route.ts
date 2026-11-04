@@ -1,102 +1,72 @@
-// app/api/stripe-webhook/route.ts
-
 import { NextResponse } from "next/server"
-import Stripe from "stripe"
-import { createClient } from "@supabase/supabase-js"
-
+import type Stripe from "stripe"
+import { serviceDatabase, MemberError } from "@/lib/member/server"
+import { stripeClient, objectId } from "@/lib/billing/stripe"
+import { billingLock } from "@/lib/billing/lock"
+import { saveSubscription } from "@/lib/billing/sync"
+import { riskEvents, recordRiskAlert, recordSyncFailure, resolveSyncFailure } from "@/lib/billing/alerts"
 export const runtime = "nodejs"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-)
-
-export async function POST(req: Request) {
-  const body = await req.text()
-  const signature = req.headers.get("stripe-signature")
-
-  if (!signature) {
-    return NextResponse.json(
-      { error: "Missing Stripe signature" },
-      { status: 400 }
-    )
-  }
-
+const handled = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted", "customer.subscription.paused", "customer.subscription.resumed", "invoice.paid", "invoice.payment_failed", "invoice.payment_action_required"])
+export async function POST(request: Request) {
+  const signature = request.headers.get("stripe-signature")
+  if (!signature) return NextResponse.json({ error: "Missing signature." }, { status: 400 })
+  const secret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!secret) return NextResponse.json({ error: "Webhook is not configured." }, { status: 503 })
+  let stripe: Stripe
+  try { stripe = stripeClient() } catch { return NextResponse.json({ error: "Billing environment is not configured." }, { status: 503 }) }
   let event: Stripe.Event
-
+  try { event = stripe.webhooks.constructEvent(await request.text(), signature, secret) }
+  catch { return NextResponse.json({ error: "Invalid signature." }, { status: 400 }) }
+  if (event.livemode !== /^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY || "")) return NextResponse.json({ error: "Billing mode mismatch." }, { status: 400 })
+  if (!handled.has(event.type) && !riskEvents.has(event.type)) return NextResponse.json({ received: true })
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET as string
-    )
-  } catch (err: any) {
-    console.error("Stripe webhook signature error:", err.message)
-    return NextResponse.json(
-      { error: "Invalid signature" },
-      { status: 400 }
-    )
-  }
-
-  try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session
-      const metadata = session.metadata || {}
-
-      const email =
-        metadata.email ||
-        session.customer_email ||
-        session.customer_details?.email ||
-        ""
-
-      const fullName = session.customer_details?.name || ""
-
-      const firstName =
-        metadata.firstName ||
-        fullName.split(" ")[0] ||
-        ""
-
-      const lastName =
-        metadata.lastName ||
-        fullName.split(" ").slice(1).join(" ") ||
-        ""
-
-      const { error } = await supabase
-        .from("members")
-        .upsert(
-          {
-            email,
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            membership_plan: metadata.planName || null,
-            vehicle_make: metadata.vehicleMake || null,
-            vehicle_model: metadata.vehicleModel || null,
-            vehicle_color: metadata.vehicleColor || null,
-            license_plate: metadata.licensePlate || null,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: session.subscription as string,
-            membership_status: "active",
-          },
-          { onConflict: "email" }
-        )
-
-      if (error) {
-        console.error("Supabase insert error:", error)
-        return NextResponse.json(
-          { error: error.message },
-          { status: 500 }
-        )
-      }
+    if (riskEvents.has(event.type)) {
+      const db = serviceDatabase()
+      await recordRiskAlert(db, stripe, event)
+      await resolveSyncFailure(db, event.id)
+      return NextResponse.json({ received: true })
     }
-
+    let subscriptionId: string | null = null
+    if (event.type.startsWith("checkout.session.")) subscriptionId = objectId((event.data.object as Stripe.Checkout.Session).subscription)
+    else if (event.type.startsWith("customer.subscription.")) subscriptionId = (event.data.object as Stripe.Subscription).id
+    else subscriptionId = objectId((event.data.object as Stripe.Invoice).parent?.subscription_details?.subscription)
+    if (!subscriptionId) return NextResponse.json({ received: true }) // Non-subscription invoices.
+    const db = serviceDatabase()
+    const { data: processed, error: processedError } = await db.from("braxy_billing_events").select("event_id").eq("event_id", event.id).maybeSingle()
+    if (processedError) throw new MemberError("Billing migration is required.", 503)
+    if (processed) { await resolveSyncFailure(db, event.id); return NextResponse.json({ received: true }) }
+    const initial = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["latest_invoice"] })
+    const customerId = objectId(initial.customer)
+    const { data: existing, error } = await db.from("members").select("email,stripe_subscription_id").eq("stripe_customer_id", customerId).maybeSingle()
+    if (error) throw new MemberError("Member lookup failed.", 503)
+    let email = existing?.email as string | undefined
+    if (!email) {
+      // New accounts must come from authenticated checkout, not caller-provided email metadata.
+      const userId = initial.metadata.auth_user_id
+      if (!userId) throw new MemberError("Unlinked legacy subscription needs review.", 409)
+      const { data, error: authError } = await db.auth.admin.getUserById(userId)
+      if (authError || !data.user?.email_confirmed_at || !data.user.email) throw new MemberError("Membership identity could not be verified.", 409)
+      email = data.user.email.trim().toLowerCase()
+    }
+    const ownerEmail = email
+    await billingLock(db, ownerEmail, async token => {
+      // Retrieve after acquiring the lock; old events must reconcile today's Stripe state.
+      let current = await stripe.subscriptions.retrieve(subscriptionId!, { expand: ["latest_invoice"] })
+      const { data: latest, error: latestError } = await db.from("members").select("stripe_subscription_id").eq("email", ownerEmail).maybeSingle()
+      if (latestError) throw new MemberError("Member lookup failed.", 503)
+      if (latest?.stripe_subscription_id && latest.stripe_subscription_id !== current.id) {
+        const linked = await stripe.subscriptions.retrieve(latest.stripe_subscription_id, { expand: ["latest_invoice"] })
+        if (linked.created >= current.created) current = linked
+      }
+      if (objectId(current.customer) !== customerId) throw new MemberError("Billing account mismatch.", 409)
+      await saveSubscription(db, current, ownerEmail, token, event.id)
+    })
+    await resolveSyncFailure(db, event.id)
     return NextResponse.json({ received: true })
-  } catch (err: any) {
-    console.error("Webhook handler error:", err)
-    return NextResponse.json(
-      { error: err.message || "Webhook failed" },
-      { status: 500 }
-    )
+  } catch {
+    // Do not acknowledge a failed write: Stripe retries this event. Do not log payloads or personal data.
+    console.error("Stripe membership synchronization failed", { eventId: event.id, type: event.type })
+    try { await recordSyncFailure(serviceDatabase(), event) } catch { console.error("Billing alert storage unavailable") }
+    return NextResponse.json({ error: "Membership synchronization failed. Retry this event." }, { status: 503 })
   }
 }

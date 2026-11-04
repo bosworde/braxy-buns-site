@@ -153,14 +153,16 @@ export default function AdminMemberDetailPage() {
     setMessage("")
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error("Please sign in again.")
       const res = await fetch("/api/cancel-subscription", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           memberId: member.id,
-          subscriptionId: member.stripe_subscription_id,
         }),
       })
 

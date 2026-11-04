@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { verifyAdmission } from "@/lib/member/admission"
 import { supabase } from "@/lib/supabase"
 
 type Member = {
@@ -100,65 +101,19 @@ if (duplicate) {
 }
 
     setDecision("approved")
-    setMessage("Member approved for wash.")
+    setMessage("Member matched. Current payment is verified when recording admission.")
     setLoading(false)
   }
 
   async function approveWash() {
     if (!member) return
-
-    if (decision !== "approved") {
-      setMessage("Wash cannot be approved from the current status.")
-      return
-    }
-
-   const { data: washVisit, error: washError } = await supabase
-  .from("wash_visits")
-  .insert({
-    member_id: member.id,
-    email: member.email,
-    membership_plan: member.membership_plan,
-    license_plate: member.license_plate,
-  })
-  .select("id")
-  .single()
-
-if (washError || !washVisit) {
-  setMessage("Could not add wash visit.")
-  return
-}
-
-const queueResult = await supabase
-  .from("tunnel_queue")
-  .insert({
-    wash_visit_id: washVisit.id,
-    license_plate: member.license_plate,
-    status: "waiting",
-    member_id: member.id,
-    first_name: member.first_name,
-    membership_plan: member.membership_plan,
-    rewards_points: (member.rewards_points || 0) + 10,
-    lifetime_washes: (member.lifetime_washes || 0) + 1,
-  })
-
-console.log("QUEUE RESULT:", queueResult)
-
-    await supabase
-      .from("members")
-      .update({
-        rewards_points: (member.rewards_points || 0) + 10,
-        lifetime_washes: (member.lifetime_washes || 0) + 1,
-      })
-      .eq("id", member.id)
-
-    setMessage("Wash approved. +10 Braxy Bucks added.")
-    setDecision("completed")
-
-    setMember({
-      ...member,
-      rewards_points: (member.rewards_points || 0) + 10,
-      lifetime_washes: (member.lifetime_washes || 0) + 1,
-    })
+    setMessage("Verifying current payment and recording admission…")
+    try {
+      const result = await verifyAdmission(member.id, true)
+      setMember({ ...member, rewards_points: result.rewards_points, lifetime_washes: result.lifetime_washes })
+      setMessage("Admission recorded. +10 Braxy Bucks awarded. Follow the attendant’s instructions; no equipment was activated.")
+      setDecision("completed")
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Verification unavailable. Do not admit.") }
   }
 
   const fullName = member
@@ -271,8 +226,8 @@ function DecisionBanner({ decision }: { decision: Decision }) {
   }
 
   const text = {
-    approved: "APPROVED",
-    completed: "WASH COMPLETED",
+    approved: "MEMBER MATCHED — VERIFY AT CHECK-IN",
+    completed: "ADMISSION RECORDED",
     duplicate: "ALREADY WASHED TODAY",
     inactive: "MEMBERSHIP INACTIVE",
     not_found: "MEMBER NOT FOUND",

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { verifyAdmission } from "@/lib/member/admission"
 import { supabase } from "@/lib/supabase"
 
 type Member = {
@@ -45,67 +46,13 @@ export default function PlateLookupPage() {
 
   async function checkInWash() {
     if (!member) return
+    setMessage("Verifying current payment and recording admission…")
+    try {
+      const result = await verifyAdmission(member.id, true)
+      setMember({ ...member, rewards_points: result.rewards_points, lifetime_washes: result.lifetime_washes })
+      setMessage("Admission recorded. +10 Braxy Bucks awarded. Follow the attendant’s instructions; no equipment was activated.")
 
-    if (member.membership_status !== "active") {
-      setMessage(
-        `Membership status is ${member.membership_status || "inactive"}. Check-in not allowed.`
-      )
-      return
-    }
-
-    setMessage("")
-
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-
-    const { data: existingVisit } = await supabase
-      .from("wash_visits")
-      .select("*")
-      .eq("member_id", member.id)
-      .gte("created_at", startOfToday.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (existingVisit) {
-      setMessage(
-        `Already checked in today at ${new Date(
-          existingVisit.created_at
-        ).toLocaleTimeString()}`
-      )
-      return
-    }
-
-    const { error } = await supabase.from("wash_visits").insert({
-      member_id: member.id,
-      email: member.email,
-      membership_plan: member.membership_plan,
-      license_plate: member.license_plate,
-    })
-
-    if (error) {
-      setMessage(error.message)
-      return
-    }
-
-    const newPoints = (member.rewards_points || 0) + 10
-    const newLifetimeWashes = (member.lifetime_washes || 0) + 1
-
-    await supabase
-      .from("members")
-      .update({
-        rewards_points: newPoints,
-        lifetime_washes: newLifetimeWashes,
-      })
-      .eq("id", member.id)
-
-    setMember({
-      ...member,
-      rewards_points: newPoints,
-      lifetime_washes: newLifetimeWashes,
-    })
-
-    setMessage("Wash checked in successfully. +10 Braxy Bucks awarded.")
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Verification unavailable. Do not admit.") }
   }
 
   const isActive = member?.membership_status === "active"

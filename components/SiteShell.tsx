@@ -47,6 +47,7 @@ const FALLBACK_LOGO =
   `);
 
 const navItems = [
+  { label: "Member App", href: "/app" },
   { label: "Home", href: "/" },
   { label: "Unlimited Club", href: "/join" },
   { label: "Our Story", href: "/our-story" },

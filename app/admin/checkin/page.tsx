@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { Html5QrcodeScanner } from "html5-qrcode"
+import { verifyAdmission } from "@/lib/member/admission"
 import { supabase } from "@/lib/supabase"
 
 type QRMember = {
@@ -127,60 +128,12 @@ export default function AdminCheckInPage() {
 
   async function checkInWash() {
     if (!member) return
+    setMessage("Verifying current payment and recording admission…")
+    try {
+      await verifyAdmission(member.memberId, true)
+      setMessage("Admission recorded. +10 Braxy Bucks awarded. Follow the attendant’s instructions; no equipment was activated.")
 
-    if (member.status !== "active") {
-      setMessage(`Membership status is ${member.status}. Check-in not allowed.`)
-      return
-    }
-
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-
-    const { data: existingVisit } = await supabase
-      .from("wash_visits")
-      .select("*")
-      .eq("member_id", member.memberId)
-      .gte("created_at", startOfToday.toISOString())
-      .maybeSingle()
-
-    if (existingVisit) {
-      setMessage(
-        `Already checked in today at ${new Date(
-          existingVisit.created_at
-        ).toLocaleTimeString()}`
-      )
-      return
-    }
-
-    const { error } = await supabase.from("wash_visits").insert({
-      member_id: member.memberId,
-      email: member.email,
-      membership_plan: member.plan,
-      license_plate: member.plate,
-    })
-
-    if (error) {
-      setMessage(error.message)
-      return
-    }
-
-    const { data: existingMember } = await supabase
-      .from("members")
-      .select("*")
-      .eq("id", member.memberId)
-      .maybeSingle()
-
-    if (existingMember) {
-      await supabase
-        .from("members")
-        .update({
-          rewards_points: (existingMember.rewards_points || 0) + 10,
-          lifetime_washes: (existingMember.lifetime_washes || 0) + 1,
-        })
-        .eq("id", member.memberId)
-    }
-
-    setMessage("Wash checked in successfully. +10 Braxy Bucks awarded.")
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Verification unavailable. Do not admit.") }
   }
 
   return (
