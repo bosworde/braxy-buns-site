@@ -10,7 +10,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     async function finishLogin() {
       await supabase.auth.getSession()
-      router.replace("/dashboard")
+      router.replace("/app")
     }
 
     finishLogin()
