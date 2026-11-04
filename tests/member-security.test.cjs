@@ -6,7 +6,7 @@ const ts = require('typescript');
 function moduleFrom(path, imports, env = {}) {
   const exports = {};
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(code, { exports, require: key => { if (!(key in imports)) throw Error(key); return imports[key] }, process: { env }, URL, console, Set, Object });
+  vm.runInNewContext(code, { exports, require: key => { if (key === "@/lib/member/launch") return moduleFrom("lib/member/launch.ts", {}, env); if (!(key in imports)) throw Error(key); return imports[key] }, process: { env }, URL, console, Set, Object });
   return exports;
 }
 const env = { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'test-only' };

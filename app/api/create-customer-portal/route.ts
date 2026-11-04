@@ -1,8 +1,10 @@
+import { preopening } from "@/lib/member/launch"
 import { NextResponse } from "next/server"
 import { stripeClient, siteOrigin } from "@/lib/billing/stripe"
 import { authenticatedMember, MemberError } from "@/lib/member/server"
 export const runtime = "nodejs"
 export async function POST(request: Request) {
+  if (preopening()) return NextResponse.json({ error: "Membership enrollment and payments are not open yet." }, { status: 503, headers: { "Cache-Control": "no-store" } })
   try {
     const { member } = await authenticatedMember(request)
     if (!member?.stripe_customer_id) throw new MemberError("No billing account is linked to your membership.", 404)

@@ -1,5 +1,5 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const ts=require('typescript');
-function load(path,imports={},env={}){imports['@/lib/billing/alerts'] ||= {riskEvents:new Set(),resolveSyncFailure:async()=>{},recordSyncFailure:async()=>{}};const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:key=>{if(!(key in imports))throw Error(key);return imports[key]},process:{env},URL,Set,Object,console:{error(){}}});return exports;}
+function load(path,imports={},env={}){imports['@/lib/billing/alerts'] ||= {riskEvents:new Set(),resolveSyncFailure:async()=>{},recordSyncFailure:async()=>{}};const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:key=>{if(key === "@/lib/member/launch")return load("lib/member/launch.ts",{},env);if(!(key in imports))throw Error(key);return imports[key]},process:{env},URL,Set,Object,console:{error(){}}});return exports;}
 class MemberError extends Error{constructor(message,status=500){super(message);this.status=status}}
 const next={NextResponse:{json:(body,options={})=>({body,status:options.status||200})}};
 const stripeModel=load('lib/billing/stripe.ts',{stripe:{default:class{}},'@/lib/member/server':{MemberError}});
@@ -81,4 +81,13 @@ test('production rejects sandbox billing and missing live price overrides',()=>{
  const imports={stripe:{default:class{}},'@/lib/member/server':{MemberError}};
  for(const key of ['sk_test_example','sk_live_example']){const m=load('lib/billing/stripe.ts',imports,{STRIPE_SECRET_KEY:key,VERCEL_ENV:'production'});assert.throws(()=>m.stripeClient(),/Live billing is not configured/)}
  const m=load('lib/billing/stripe.ts',imports,{STRIPE_SECRET_KEY:'rk_live_example',VERCEL_ENV:'production',STRIPE_GECKO_PRICE_ID:'price_live_1',STRIPE_IGUANA_PRICE_ID:'price_live_2',STRIPE_DRAGON_PRICE_ID:'price_live_3'});assert.doesNotThrow(()=>m.stripeClient());
+});
+test('pre-opening production rejects checkout and portal before identity or Stripe access',async()=>{
+ for(const path of ['app/api/create-checkout-session/route.ts','app/api/create-customer-portal/route.ts']){
+  let touched=false;
+  const route=load(path,{'next/server':next,'node:crypto':{},'@/lib/member/server':{MemberError,authenticatedMember:()=>{touched=true;throw Error('unexpected')}},'@/lib/billing/stripe':{},'@/lib/billing/lock':{}},{VERCEL_ENV:'production'});
+  const response=await route.POST(request({planName:'Gecko Wash Club'}));
+  assert.equal(response.status,503);assert.match(response.body.error,/not open yet/);assert.equal(touched,false);
+ }
+ const launch=load('lib/member/launch.ts',{}, {VERCEL_ENV:'preview'});assert.equal(launch.preopening(),false);
 });
