@@ -142,15 +142,14 @@ export default function JoinPage() {
                     disabled={loading}
                     aria-pressed={active}
                     onClick={() => setSelectedPlan(key)}
-                    className={`rounded-[1.5rem] border p-5 text-left transition ${
+                    className={`flex h-full min-w-0 flex-col items-center rounded-[1.5rem] border p-5 text-center transition ${
                       active
                         ? "border-white bg-white text-slate-900 shadow-xl"
                         : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                     }`}
                   >
-                    <Image src={plan.image} alt={`${plan.name} mascot`} width={240} height={480} className="mx-auto h-56 w-full object-contain" />
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h2 className="text-xl font-semibold">{plan.name}</h2>
+                    <Image src={plan.image} alt={`${plan.name} mascot`} width={240} height={480} className="mx-auto h-56 w-full shrink-0 object-contain" />
+                    <div className="mb-3 flex h-7 items-center justify-center">
 
                       {key === "plus" ? (
                         <span
@@ -165,12 +164,15 @@ export default function JoinPage() {
                       ) : null}
                     </div>
 
+                    <h2 className="text-xl font-semibold">{plan.name}</h2>
+
                     <p
                       className={`mt-3 text-3xl font-semibold ${
                         active ? "text-slate-900" : "text-white"
                       }`}
                     >
-                      {plan.price}
+                      {plan.price.replace("/mo", "")}
+                      <span className="mt-1 block text-sm font-normal opacity-70">per month</span>
                     </p>
 
                     <p
@@ -208,11 +210,11 @@ export default function JoinPage() {
               className="mb-6 rounded-[1.5rem] p-[1px]"
               style={{ backgroundImage: AUTISM_GRADIENT }}
             >
-              <div className="rounded-[1.45rem] bg-slate-950 px-5 py-4">
+              <div className="rounded-[1.45rem] bg-slate-950 px-5 py-4 text-center">
                 <Image src={selected.image} alt={`${selected.name} mascot`} width={160} height={320} className="mx-auto h-40 w-full object-contain" />
                 <p className="text-sm text-white/60">Selected plan</p>
 
-                <div className="mt-1 flex items-end justify-between gap-4">
+                <div className="mt-1 flex flex-col items-center gap-3">
                   <div>
                     <p className="text-2xl font-semibold">{selected.name}</p>
                     <p className="text-sm text-white/70">{selected.price}</p>
