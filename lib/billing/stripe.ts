@@ -18,6 +18,11 @@ export function stripeClient() {
   if (process.env.VERCEL_ENV !== "production" && /^(sk|rk)_live_/.test(key)) {
     throw new MemberError("Use Stripe test mode for this preview. Live billing is disabled here.", 503)
   }
+  if (process.env.VERCEL_ENV === "production") {
+    if (!/^(sk|rk)_live_/.test(key) || !process.env.STRIPE_GECKO_PRICE_ID || !process.env.STRIPE_IGUANA_PRICE_ID || !process.env.STRIPE_DRAGON_PRICE_ID) {
+      throw new MemberError("Live billing is not configured yet. Please contact the team.", 503)
+    }
+  }
   return new Stripe(key, { maxNetworkRetries: 2, timeout: 15000 })
 }
 export function siteOrigin() {

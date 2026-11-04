@@ -57,8 +57,8 @@ export async function POST(request: Request) {
       if (saveError) throw new MemberError("Couldn’t prepare checkout. Please try again.", 503)
       const session = await stripe.checkout.sessions.create({
         mode: "subscription", customer: customerId, client_reference_id: user.id,
-        payment_method_types: ["card"], line_items: [{ price, quantity: 1 }],
-        success_url: `${baseUrl}/app?checkout=success`, cancel_url: `${baseUrl}/join?canceled=true`,
+        line_items: [{ price, quantity: 1 }],
+        success_url: `${baseUrl}/app?checkout=success`, cancel_url: `${baseUrl}/join?plan=${details.planName.split(" ")[0].toLowerCase()}&canceled=true`,
         metadata: details, subscription_data: { metadata: details },
       }, { idempotencyKey: `braxy-checkout:${attempt}` })
       const { error: linkError } = await db.rpc("braxy_save_checkout", { p_email: email, p_token: token, p_state: { customer_id: customerId, attempt_id: attempt, profile: details, price_id: price, return_origin: baseUrl, session_id: session.id } })

@@ -20,7 +20,13 @@ export default function AuthCallbackPage() {
         }
         const { data, error } = await supabase.auth.getSession()
         if (error || !data.session) throw new Error("We couldn’t finish signing you in. Request a new link and open it in the same browser.")
-        if (!disposed) router.replace("/app")
+        let destination = "/app"
+        try {
+          const plan = sessionStorage.getItem("braxy:join-plan")
+          sessionStorage.removeItem("braxy:join-plan")
+          if (plan && ["gecko", "iguana", "dragon"].includes(plan)) destination = `/join?plan=${plan}`
+        } catch { /* Default to the member app when storage is unavailable. */ }
+        if (!disposed) router.replace(destination)
       } catch { if (!disposed) setError("This sign-in link could not be verified. Request a new link and open it in the same browser.") }
     }
     void finish()

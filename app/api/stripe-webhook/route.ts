@@ -4,6 +4,7 @@ import { serviceDatabase, MemberError } from "@/lib/member/server"
 import { stripeClient, objectId } from "@/lib/billing/stripe"
 import { billingLock } from "@/lib/billing/lock"
 import { saveSubscription } from "@/lib/billing/sync"
+import { riskEvents, recordRiskAlert, recordSyncFailure, resolveSyncFailure } from "@/lib/billing/alerts"
 export const runtime = "nodejs"
 const handled = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted", "customer.subscription.paused", "customer.subscription.resumed", "invoice.paid", "invoice.payment_failed", "invoice.payment_action_required"])
 export async function POST(request: Request) {
@@ -17,8 +18,14 @@ export async function POST(request: Request) {
   try { event = stripe.webhooks.constructEvent(await request.text(), signature, secret) }
   catch { return NextResponse.json({ error: "Invalid signature." }, { status: 400 }) }
   if (event.livemode !== /^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY || "")) return NextResponse.json({ error: "Billing mode mismatch." }, { status: 400 })
-  if (!handled.has(event.type)) return NextResponse.json({ received: true })
+  if (!handled.has(event.type) && !riskEvents.has(event.type)) return NextResponse.json({ received: true })
   try {
+    if (riskEvents.has(event.type)) {
+      const db = serviceDatabase()
+      await recordRiskAlert(db, stripe, event)
+      await resolveSyncFailure(db, event.id)
+      return NextResponse.json({ received: true })
+    }
     let subscriptionId: string | null = null
     if (event.type.startsWith("checkout.session.")) subscriptionId = objectId((event.data.object as Stripe.Checkout.Session).subscription)
     else if (event.type.startsWith("customer.subscription.")) subscriptionId = (event.data.object as Stripe.Subscription).id
@@ -27,7 +34,7 @@ export async function POST(request: Request) {
     const db = serviceDatabase()
     const { data: processed, error: processedError } = await db.from("braxy_billing_events").select("event_id").eq("event_id", event.id).maybeSingle()
     if (processedError) throw new MemberError("Billing migration is required.", 503)
-    if (processed) return NextResponse.json({ received: true })
+    if (processed) { await resolveSyncFailure(db, event.id); return NextResponse.json({ received: true }) }
     const initial = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["latest_invoice"] })
     const customerId = objectId(initial.customer)
     const { data: existing, error } = await db.from("members").select("email,stripe_subscription_id").eq("stripe_customer_id", customerId).maybeSingle()
@@ -54,10 +61,12 @@ export async function POST(request: Request) {
       if (objectId(current.customer) !== customerId) throw new MemberError("Billing account mismatch.", 409)
       await saveSubscription(db, current, ownerEmail, token, event.id)
     })
+    await resolveSyncFailure(db, event.id)
     return NextResponse.json({ received: true })
   } catch {
     // Do not acknowledge a failed write: Stripe retries this event. Do not log payloads or personal data.
     console.error("Stripe membership synchronization failed", { eventId: event.id, type: event.type })
+    try { await recordSyncFailure(serviceDatabase(), event) } catch { console.error("Billing alert storage unavailable") }
     return NextResponse.json({ error: "Membership synchronization failed. Retry this event." }, { status: 503 })
   }
 }

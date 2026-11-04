@@ -25,7 +25,7 @@ The customer flow is plan selection → authenticated Checkout → Stripe webhoo
 - Only the sandbox Stripe account is connected. Live account readiness, live products/prices, production credentials, webhook signing secret and payment terms remain unverified. Do not enable real charges.
 - Preview and production currently share Supabase and some environment definitions. Use isolated test data and move sandbox verification to a dedicated database before inviting external testers.
 - Old sandbox webhook still sends checkout-completed events to main, which shares the database. Retire that legacy writer in a controlled cutover; do not silently disable existing website billing.
-- Add explicit refund/dispute/fraud handling and operational alerts before public paid launch. Existing lifecycle handling alone does not cover these cases.
+- Refund/dispute/fraud events now create durable administrator review alerts, linked through Stripe charge/payment/invoice/subscription records. Synchronization failures create alerts and successful retries resolve them. Staff review and external outage notification remain required; no automatic refunds or access revocation are implied.
 - Confirm applicable tax treatment and registration with the business's accountant before configuring tax collection; sandbox prices currently have unspecified tax behavior.
 - Configure durable error alerting. Recent 20-minute preview error-log query returned no records; that is not proof that all customer flows succeed.
 
@@ -34,3 +34,12 @@ At the installed lane, test authorized, unknown, canceled and unpaid plates; day
 
 ## Deployment
 Keep the work in feature/member-app and its preview. Production merge requires completion of the remaining gates, not merely a successful build.
+
+## Additional completion pass
+- 36 automated tests pass, including multi-invoice risk mapping, replay handling, alert isolation and production billing gates. Build and TypeScript checks pass.
+- Signup preserves plan selection in its URL, on canceled Stripe checkout, and across same-browser email-link sign-in. Other-browser login returns safely to the app.
+- Checkout uses Dashboard-controlled payment methods; delayed-payment eligibility remains gated on paid invoice and active subscription.
+- Production billing refuses sandbox keys and missing explicit live price IDs.
+- Admin dashboard displays open billing review alerts; alert access and review actions require server-verified admin identity. Alerts store Stripe resource IDs, not customer names, emails, card details or raw webhook payloads.
+- Alert migration 20261104210537 applied; anonymous/customer direct reads denied.
+- See [cutover and rollback procedure](launch-cutover.md). Public production deployment remains unchanged.

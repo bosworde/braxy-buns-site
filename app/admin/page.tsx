@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import BillingAlerts from "./BillingAlerts"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -116,6 +117,7 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
+      <BillingAlerts />
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>

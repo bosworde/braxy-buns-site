@@ -141,7 +141,7 @@ export default function JoinPage() {
                     type="button"
                     disabled={loading}
                     aria-pressed={active}
-                    onClick={() => setSelectedPlan(key)}
+                    onClick={() => { setSelectedPlan(key); const url = new URL(window.location.href); url.searchParams.set("plan", plan.name.toLowerCase()); window.history.replaceState(null, "", url) }}
                     className={`flex h-full min-w-0 flex-col items-center rounded-[1.5rem] border p-5 text-center transition ${
                       active
                         ? "border-white bg-white text-slate-900 shadow-xl"
@@ -233,7 +233,7 @@ export default function JoinPage() {
               Enter your details and continue to secure Stripe checkout.
             </p>
 
-            {!memberEmail && <p className="mt-4 text-cyan-300"><Link href="/app">Sign in securely in the Member App</Link> before starting your membership.</p>}
+            {!memberEmail && <p className="mt-4 text-cyan-300"><Link href="/app" onClick={() => { try { sessionStorage.setItem("braxy:join-plan", selected.name.toLowerCase()) } catch { /* Sign-in still works without storage. */ } }}>Sign in securely in the Member App</Link> before starting your membership.</p>}
             <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="grid min-w-0 gap-2 text-sm">

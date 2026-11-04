@@ -1,5 +1,5 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const ts=require('typescript');
-function load(path,imports={},env={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:key=>{if(!(key in imports))throw Error(key);return imports[key]},process:{env},URL,Set,Object,console:{error(){}}});return exports;}
+function load(path,imports={},env={}){imports['@/lib/billing/alerts'] ||= {riskEvents:new Set(),resolveSyncFailure:async()=>{},recordSyncFailure:async()=>{}};const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:key=>{if(!(key in imports))throw Error(key);return imports[key]},process:{env},URL,Set,Object,console:{error(){}}});return exports;}
 class MemberError extends Error{constructor(message,status=500){super(message);this.status=status}}
 const next={NextResponse:{json:(body,options={})=>({body,status:options.status||200})}};
 const stripeModel=load('lib/billing/stripe.ts',{stripe:{default:class{}},'@/lib/member/server':{MemberError}});
@@ -67,7 +67,7 @@ test('checkout preserves each requested tier and replaces an unpaid checkout for
   const wanted=stripeModel.prices()[planName];const calls=[];
   const previous={customer_id:'cus_owner',session_id:'cs_old',price_id:'price_other'};
   const db={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:previous})})})}),rpc:async()=>({error:null})};
-  const stripe={subscriptions:{list:async()=>({data:[],has_more:false})},checkout:{sessions:{retrieve:async()=>({id:'cs_old',status:'open',url:'https://checkout.stripe.com/old'}),expire:async id=>{calls.push(['expire',id])},create:async args=>{calls.push(['create',args.line_items[0].price]);return{id:'cs_new',url:'https://checkout.stripe.com/new'}}}}};
+  const stripe={subscriptions:{list:async()=>({data:[],has_more:false})},checkout:{sessions:{retrieve:async()=>({id:'cs_old',status:'open',url:'https://checkout.stripe.com/old'}),expire:async id=>{calls.push(['expire',id])},create:async args=>{assert.equal(new URL(args.cancel_url).searchParams.get('plan'),planName.split(' ')[0].toLowerCase());assert.equal(args.payment_method_types,undefined);calls.push(['create',args.line_items[0].price]);return{id:'cs_new',url:'https://checkout.stripe.com/new'}}}}};
   const route=load('app/api/create-checkout-session/route.ts',{'next/server':next,'node:crypto':{randomUUID:()=> 'attempt'},'@/lib/member/server':{MemberError,authenticatedMember:async()=>({db,user:{id:'user',email:'owner@example.com'},member:{stripe_customer_id:'cus_owner'}})},'@/lib/billing/stripe':{prices:stripeModel.prices,siteOrigin:()=> 'https://example.com',stripeClient:()=>stripe},'@/lib/billing/lock':{billingLock:async(db,email,fn)=>fn('lease')}});
   const result=await route.POST(request({planName,firstName:'A',lastName:'B',licensePlate:'ABC123',vehicleMake:'Ford',vehicleModel:'Explorer',vehicleColor:'White'}));
   assert.equal(result.status,200);assert.deepEqual(calls,[['expire','cs_old'],['create',wanted]]);
@@ -75,4 +75,10 @@ test('checkout preserves each requested tier and replaces an unpaid checkout for
   const resumed=await route.POST(request({planName,firstName:'A',lastName:'B',licensePlate:'ABC123',vehicleMake:'Ford',vehicleModel:'Explorer',vehicleColor:'White'}));
   assert.equal(resumed.body.resumed,true);assert.equal(calls.length,0);
  }
+});
+
+test('production rejects sandbox billing and missing live price overrides',()=>{
+ const imports={stripe:{default:class{}},'@/lib/member/server':{MemberError}};
+ for(const key of ['sk_test_example','sk_live_example']){const m=load('lib/billing/stripe.ts',imports,{STRIPE_SECRET_KEY:key,VERCEL_ENV:'production'});assert.throws(()=>m.stripeClient(),/Live billing is not configured/)}
+ const m=load('lib/billing/stripe.ts',imports,{STRIPE_SECRET_KEY:'rk_live_example',VERCEL_ENV:'production',STRIPE_GECKO_PRICE_ID:'price_live_1',STRIPE_IGUANA_PRICE_ID:'price_live_2',STRIPE_DRAGON_PRICE_ID:'price_live_3'});assert.doesNotThrow(()=>m.stripeClient());
 });
