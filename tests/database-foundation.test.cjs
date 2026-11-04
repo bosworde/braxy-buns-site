@@ -24,7 +24,7 @@ test('foundation migration protects actual PostgreSQL rows and serializes billin
     alter table members enable row level security;
     create policy old_public_access on members for all to anon,authenticated using(true) with check(true);
   `);
-  await db.exec(fs.readFileSync('supabase/migrations/202611040001_member_foundation.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261104194519_member_foundation.sql','utf8'));
   async function as(role, uid, sql) {
     await db.exec(`set role ${role}; set request.jwt.claim.sub = '${uid || ''}'`);
     try { return await db.query(sql) } finally { await db.exec('reset role'); }

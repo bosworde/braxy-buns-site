@@ -34,7 +34,7 @@ begin
   foreach t in array array['members','wash_visits','tunnel_queue','welcome_screen','leads','founding_member_leads'] loop
     if to_regclass('public.' || t) is null then continue; end if;
     execute format('alter table public.%I enable row level security', t);
-    execute format('revoke all on table public.%I from anon', t);
+    execute format('revoke all on table public.%I from public, anon, authenticated', t);
     execute format('grant select, insert, update, delete on table public.%I to authenticated', t);
     -- Restrictive policy blocks even pre-existing permissive/public policies. Keep those policies for review.
     execute format('create policy braxy_admin_boundary on public.%I as restrictive for all to anon, authenticated using (public.braxy_is_admin()) with check (public.braxy_is_admin())', t);
@@ -128,4 +128,10 @@ begin
 end $$;
 revoke all on function public.braxy_save_checkout(text,uuid,jsonb) from public, anon, authenticated;
 grant execute on function public.braxy_save_checkout(text,uuid,jsonb) to service_role;
+-- This existing event-trigger function is infrastructure-only.
+do $$ begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end $$;
 commit;
