@@ -43,3 +43,12 @@ Keep the work in feature/member-app and its preview. Production merge requires c
 - Admin dashboard displays open billing review alerts; alert access and review actions require server-verified admin identity. Alerts store Stripe resource IDs, not customer names, emails, card details or raw webhook payloads.
 - Alert migration 20261104210537 applied; anonymous/customer direct reads denied.
 - See [cutover and rollback procedure](launch-cutover.md). Public production deployment remains unchanged.
+
+## Payment recovery follow-up (21:47 UTC onward)
+- User screenshots/report verified sandbox portal cancellation at period end (December 4), wash pass still visible during the paid period, and cancellation reversal.
+- Separate QA customer `cus_VZKd8uqSSdf9kC`, subscription `sub_1UYBzF193rp9H3JHC7zH5SYy`: initial Gecko invoice paid and deployed webhook set member active. A prorated Gecko-to-Iguana change with a declining test source produced a $10 open invoice and past_due status; the deployed webhook persisted past_due. Replacing the test source paid that same invoice and restored active status through the webhook. This was a subscription-update payment, NOT a time-advanced monthly renewal.
+- Ran the actual admission route logic locally against the captured Stripe states: active accepted, past_due rejected (409) without calling admission RPC, recovered active accepted. Authentication/DB boundaries were stubbed for this local check; it was not an authenticated hosted admission request.
+- Canceled the QA subscription after verification; deployed webhook persisted cancelled. No visits or rewards were created. Dennis's account was not mutated.
+- Repaired the failed-payment screen: plain-language payment-needed status, direct secure billing action rather than signup, separate pending-payment and verification-outage wording. Render tests cover the actual MemberApp: no QR for unpaid states, QR restored when active, and offline recovery controls disabled.
+- 40 automated tests pass. A signed-in browser test of the failed-payment UI remains outstanding.
+- Monthly test-clock rollover is still outstanding: the connected Stripe tool exposes clock creation but no clock-advance operation. Dashboard fallback reaches the Stripe sign-in page; dashboard authentication is needed to continue. No unused clock was created.
