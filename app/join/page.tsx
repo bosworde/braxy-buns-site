@@ -1,4 +1,4 @@
 import JoinForm from "./JoinForm"
-import PreopeningApp from "../app/PreopeningApp"
+import MemberApp from "../app/MemberApp"
 import { preopening } from "@/lib/member/launch"
-export default function Page() { return preopening() ? <PreopeningApp /> : <JoinForm /> }
+export default function Page() { return preopening() ? <MemberApp preopening initialView="garage" /> : <JoinForm /> }

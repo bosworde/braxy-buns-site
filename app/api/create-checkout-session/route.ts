@@ -6,7 +6,7 @@ import { stripeClient, prices, siteOrigin } from "@/lib/billing/stripe"
 import { billingLock } from "@/lib/billing/lock"
 export const runtime = "nodejs"
 export async function POST(request: Request) {
-  if (preopening()) return NextResponse.json({ error: "Membership enrollment and payments are not open yet." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+  if (preopening()) return NextResponse.json({ error: "Paid memberships and payments are not open yet. Free pre-opening registration is available in the app." }, { status: 503, headers: { "Cache-Control": "no-store" } })
   try {
     const { db, user, member } = await authenticatedMember(request)
     const email = user.email!.trim().toLowerCase()

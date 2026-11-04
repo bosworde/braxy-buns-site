@@ -18,18 +18,18 @@ const common = {
   'next/link': { __esModule: true, default: ({ children, ...props }) => React.createElement('a', props, children) },
 };
 const unavailable = load('app/app/UnavailablePass.tsx', common);
-function screen(status, online = true) {
+function screen(status, online = true, preopening = false, view = 'pass') {
   const member = { id: 'qa', first_name: 'QA', membership_status: status, membership_plan: 'Gecko Wash Club', billingAvailable: true };
-  const states = ['pass', { member, visits: [], visitsUnavailable: false }, true, false, false, '', '', false, '', false, false, null, online];
+  const states = [view, { member, visits: [], visitsUnavailable: false }, true, false, false, '', '', false, '', false, false, null, "Gecko", online];
   let i = 0;
   const app = load('app/app/MemberApp.tsx', {
-    ...common, './UnavailablePass': unavailable,
+    ...common, './UnavailablePass': unavailable, './PreopeningProfile': load('app/app/PreopeningProfile.tsx', common),
     '@/lib/member/model': load('lib/member/model.ts'),
     react: { ...React, useState: () => [states[i++], () => {}], useRef: () => ({ current: 0 }), useEffect: () => {}, useCallback: fn => fn },
     'next/image': { __esModule: true, default: ({ priority, ...props }) => React.createElement('img', props) },
     'qrcode.react': { QRCodeCanvas: () => React.createElement('canvas', { id: 'braxy-member-qr' }) },
   });
-  return renderToStaticMarkup(React.createElement(app.default));
+  return renderToStaticMarkup(React.createElement(app.default, { preopening }));
 }
 test('overdue member gets recovery action, no signup detour and no usable QR', () => {
   for (const status of ['past_due', 'unpaid', 'incomplete']) {
@@ -52,4 +52,23 @@ test('pending payment and verification outages are not called declines', () => {
 });
 test('offline recovery controls are disabled', () => {
   assert.match(screen('past_due', false), /<button[^>]*disabled=""[^>]*>Fix payment securely/);
+});
+
+test('pre-opening overrides active status and never displays an entry QR or billing control', () => {
+  const html = screen('active', true, true);
+  assert.match(html, /AVAILABLE AFTER OPENING/);
+  assert.match(html, /not valid for wash entry/);
+  assert.doesNotMatch(html, /braxy-member-qr|Download wash pass|Manage billing|Fix payment securely/);
+});
+test('pre-opening clubs express interest without checkout links', () => {
+  const html = screen('preopening', true, true, 'plans');
+  for (const plan of ['Gecko', 'Iguana', 'Dragon']) assert.match(html, new RegExp('Interested in ' + plan));
+  assert.doesNotMatch(html, /href="\/join|Manage billing/);
+});
+test('pre-opening profile provides free registration and optional vehicle details', () => {
+  const html = screen('preopening', true, true, 'garage');
+  assert.match(html, /FREE PRE-OPENING REGISTRATION/);
+  assert.match(html, /name="preferred_plan"/);
+  assert.match(html, /type="checkbox"[^>]*required=""[^>]*name="acknowledgement"/);
+  assert.doesNotMatch(html, /Manage billing|Continue to checkout/);
 });

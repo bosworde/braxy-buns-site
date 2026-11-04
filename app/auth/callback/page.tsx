@@ -26,6 +26,8 @@ export default function AuthCallbackPage() {
           sessionStorage.removeItem("braxy:join-plan")
           if (plan && ["gecko", "iguana", "dragon"].includes(plan)) destination = `/join?plan=${plan}`
         } catch { /* Default to the member app when storage is unavailable. */ }
+        const preopeningPlan = params.get("preopening_plan")
+        if (preopeningPlan && ["gecko", "iguana", "dragon"].includes(preopeningPlan)) destination = `/join?plan=${preopeningPlan}`
         if (!disposed) router.replace(destination)
       } catch { if (!disposed) setError("This sign-in link could not be verified. Request a new link and open it in the same browser.") }
     }
