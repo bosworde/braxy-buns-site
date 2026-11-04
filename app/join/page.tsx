@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 
 type PlanKey = "basic" | "plus" | "max"
@@ -9,6 +10,7 @@ type PlanKey = "basic" | "plus" | "max"
 const plans = {
   basic: {
     name: "Gecko",
+    image: "/gecko.png",
     stripeName: "Gecko Wash Club",
     price: "$24.99/mo",
     description: "A fast, reliable premium tunnel wash for everyday shine.",
@@ -16,6 +18,7 @@ const plans = {
   },
   plus: {
     name: "Iguana",
+    image: "/iguana.png",
     stripeName: "Iguana Wash Club",
     price: "$34.99/mo",
     description:
@@ -24,6 +27,7 @@ const plans = {
   },
   max: {
     name: "Dragon",
+    image: "/dragon.png",
     stripeName: "Dragon Wash Club",
     price: "$44.99/mo",
     description:
@@ -144,7 +148,8 @@ export default function JoinPage() {
                         : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <Image src={plan.image} alt={`${plan.name} mascot`} width={240} height={480} className="mx-auto h-56 w-full object-contain" />
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <h2 className="text-xl font-semibold">{plan.name}</h2>
 
                       {key === "plus" ? (
@@ -204,6 +209,7 @@ export default function JoinPage() {
               style={{ backgroundImage: AUTISM_GRADIENT }}
             >
               <div className="rounded-[1.45rem] bg-slate-950 px-5 py-4">
+                <Image src={selected.image} alt={`${selected.name} mascot`} width={160} height={320} className="mx-auto h-40 w-full object-contain" />
                 <p className="text-sm text-white/60">Selected plan</p>
 
                 <div className="mt-1 flex items-end justify-between gap-4">
