@@ -25,29 +25,29 @@ The app-specific server routes verify the bearer token with Supabase and use the
 
 The Supabase auth redirect allowlist must permit the canonical site's `/auth/callback` and the exact authorized preview callback URL when testing. Do not broadly allow arbitrary preview domains. Use a dedicated test environment and Stripe test mode for end-to-end verification.
 
-## Review before production launch
+## Foundation changes
 
-This pull request is a draft integration, not evidence that live services or the entire pre-existing platform are secure.
+Server-verified, confirmed-email identity now protects checkout, billing, vehicle edits, cancellation and LPR scanning. Cancellation and LPR require an existing administrator. Session logging was removed. Checkout serializes attempts per account and reuses Stripe idempotency keys; it rejects duplicate subscriptions. Webhooks verify signatures and mode, retrieve current subscription state, and record successful events transactionally. Renewals preserve points and customer-edited profiles. Paid eligibility requires a recognized, unpaused active subscription with a paid latest invoice. Member refresh fails closed when Stripe verification is unavailable. Preview deployments reject live Stripe keys.
 
-1. **Database policies:** inspect Supabase RLS and grants on `members`, `wash_visits`, and operational tables. Ensure anonymous clients cannot read member profiles, and authenticated users cannot edit billing IDs, plans, statuses, points, or other customers. No SQL policy/schema files are present in this repository. Client-side admin guards are not a database security boundary. Review policy changes alongside the existing admin workflows.
-2. **Pre-existing cancellation endpoint:** `/api/cancel-subscription` accepts caller-supplied member/subscription IDs without server authentication. It must be protected and the admin caller updated before customer launch. This draft does not modify that separate admin workflow.
-3. **Subscription lifecycle:** the current Stripe webhook only handles checkout completion. Verify payment status and synchronize renewals, failed payments, cancellations, and subscription changes before relying on the stored `membership_status` to grant wash eligibility. Stripe portal changes otherwise may leave the local status stale.
-4. **Operational APIs:** audit server authentication on LPR/check-in/tunnel actions and validate real eligibility at every admission. A downloaded member-ID QR identifies a member; it is not proof of a currently paid subscription.
-5. **Existing admin logging:** remove session logging in `app/admin/AdminGuard.tsx` before launch; it includes session data in the browser console.
-6. **Account matching:** existing membership emails should be normalized to lowercase and unique. Verify `wash_visits.member_id` links to the correct member. The app reports history failures separately from profile failures.
-7. **Paid signup:** the existing `/join` and checkout implementation are reused, not replaced. Verify the existing Stripe price IDs, return URLs, webhook delivery, duplicate-subscription handling, terms, and opening policy before accepting payments.
+The migration in `supabase/migrations/202611040001_member_foundation.sql` adds normalized unique member identities, restrictive administrator policies, service-only billing state, fenced billing leases and atomic reconciliation functions. It fails on invalid existing identity data rather than merging accounts. Inspect the actual schema, grants, functions, views and existing data before applying. This migration has NOT been applied remotely.
 
-## Verification
+## Connected-service verification — 2026-11-04
 
-Run `node --test tests/member-security.test.cjs` for focused regression tests covering missing/invalid authentication, verified-email ownership, vehicle-field allowlisting, billing ownership, and rewards boundaries.
+- Stripe sandbox account `acct_1TezBR193rp9H3JH`: all three configured price IDs exist, are active monthly USD prices, and match $24.99 / $34.99 / $44.99. These are test prices, not production prices.
+- Existing sandbox webhook `we_1TfPNm193rp9H3JHgGPU8FRD` targets the main deployment and subscribes only to `checkout.session.completed`. Do not point it at unconfigured code. After the migration and environment are verified, configure a preview webhook with checkout completed/async success/async failure; subscription created/updated/deleted/paused/resumed; invoice paid/payment failed/payment action required. Set its signing secret server-side.
+- Vercel project `braxy-buns-site` exists. Configuration access returned 403 requiring the user's team-access grant. Environment values have not been verified.
+- Supabase connection lists the Gmail organization but no projects. The real database schema and auth redirect allowlist remain unverified.
 
-Run `npx tsc --noEmit` and `npm run build` with the required environment configured. Placeholder values can validate compilation but cannot validate sign-in, database access, Stripe, or tunnel operations.
+## Required before launch
 
-In a test deployment, verify: email-link login; a member with no linked record; active/inactive pass display; sign-out; vehicle validation and reload; cross-account denial; empty/error/loaded wash history; billing return; all legacy redirects; mobile layout; home-screen installation. Do not test with real charges or live tunnel controls.
+1. Expose the existing Supabase project to the connection. Inspect schema and identity conflicts; test the migration against that schema, then apply through migrations. Audit exposed views/functions and operational admission workflows independently.
+2. Grant Vercel team access. Configure preview credentials for the correct Supabase environment and Stripe sandbox, `STRIPE_WEBHOOK_SECRET`, and the exact Supabase auth callback allowlist. Optional price overrides are `STRIPE_GECKO_PRICE_ID`, `STRIPE_IGUANA_PRICE_ID`, `STRIPE_DRAGON_PRICE_ID`.
+3. Configure the preview webhook after deployment and verify email login, checkout, duplicate submission, invoice failure/recovery, cancellation, billing return, vehicle reload and cross-account denial end to end. Backfill legacy Stripe links only after confirming ownership; legacy subscriptions without a linked customer or verified auth metadata deliberately require review.
+4. Verify current paid eligibility at every operational admission. A saved member-ID QR is identity, not proof of payment. LPR camera matching, gate/tunnel integration and physical hardware have not been tested.
+5. Decide opening/payment terms and activate production Stripe prices and keys separately. Review this draft before merging to production.
 
-### Local validation for this draft
+## Validation
 
-- TypeScript check passed.
-- Production build passed, including `/app`, `/api/member`, the app manifest, and icons. Build-only placeholder environment values were used; no live credentials or transactions were involved.
-- All six focused regression tests passed.
-- Browser QA was blocked by the managed preview launcher passing Vite-style `--host` and `--strictPort` flags to Next.js. No application runtime was changed to work around the launcher. Verify the responsive screens and interactions on the Vercel preview before merge.
+`node --test tests/*.test.cjs`: 28 passing tests, including real PostgreSQL migration/RLS tests using PGlite, billing concurrency and fencing, duplicate/out-of-order webhook delivery, signature rejection, account ownership, unauthorized cancellation/LPR, and duplicate checkout prevention. Fixtures and mocked Stripe calls do not prove hosted integration.
+
+Run `npm run build` with the required environment; placeholder credentials validate compilation only. The existing color-matched preview was visually checked previously; foundation integration still needs the connected end-to-end checks above.

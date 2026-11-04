@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
+import { authenticatedAdmin, MemberError } from "@/lib/member/server"
 
 export const runtime = "nodejs"
 
 export async function POST(req: Request) {
   try {
+    await authenticatedAdmin(req)
     const apiKey = process.env.PLATE_RECOGNIZER_API_KEY
 
     if (!apiKey) {
@@ -26,6 +28,10 @@ export async function POST(req: Request) {
       )
     }
 
+    if (image.size > 10 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(image.type)) {
+      return NextResponse.json({ error: "Upload a JPEG, PNG, or WebP image under 10 MB." }, { status: 400 })
+    }
+
     const plateForm = new FormData()
     plateForm.append("upload", image)
 
@@ -37,6 +43,7 @@ export async function POST(req: Request) {
           Authorization: `Token ${apiKey}`,
         },
         body: plateForm,
+        signal: AbortSignal.timeout(15000),
       }
     )
 
@@ -57,7 +64,7 @@ export async function POST(req: Request) {
       confidence,
     })
   } catch (error) {
-    console.error("LPR scan error:", error)
+    if (error instanceof MemberError) return NextResponse.json({ error: error.message }, { status: error.status })
 
     return NextResponse.json(
       { error: "Server error scanning plate." },

@@ -1,7 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 type PlanKey = "basic" | "plus" | "max"
 
@@ -35,6 +36,8 @@ const AUTISM_GRADIENT =
   "linear-gradient(90deg,#E40303 0%,#FF8C00 18%,#FFED00 34%,#008026 50%,#004DFF 68%,#750787 100%)"
 
 export default function JoinPage() {
+  const [memberEmail, setMemberEmail] = useState("")
+  useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMemberEmail(data.user?.email || "")) }, [])
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>("plus")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -56,10 +59,14 @@ export default function JoinPage() {
     const vehicleMake = String(formData.get("vehicleMake") || "")
     const vehicleModel = String(formData.get("vehicleModel") || "")
 
+    try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Sign in through the Member App first, then return here to complete signup.")
     const response = await fetch("/api/create-checkout-session", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         planName: selected.stripeName,
@@ -83,6 +90,8 @@ export default function JoinPage() {
     }
 
     setMessage(data.error || "Unable to start checkout.")
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to start checkout.") }
+    finally { setLoading(false) }
   }
 
   return (
@@ -209,6 +218,7 @@ export default function JoinPage() {
               Enter your details and continue to secure Stripe checkout.
             </p>
 
+            {!memberEmail && <p className="mt-4 text-cyan-300"><Link href="/app">Sign in securely in the Member App</Link> before starting your membership.</p>}
             <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-2 text-sm">
@@ -238,6 +248,8 @@ export default function JoinPage() {
                   required
                   type="email"
                   name="email"
+                  value={memberEmail}
+                  readOnly
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/35 focus:border-white/30"
                   placeholder="you@example.com"
                 />

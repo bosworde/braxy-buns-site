@@ -68,9 +68,12 @@ export default function LprCameraPage() {
     const formData = new FormData()
     formData.append("image", imageFile)
 
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setMessage("Please sign in again."); setScanLoading(false); return }
     const response = await fetch("/api/lpr-scan", {
       method: "POST",
       body: formData,
+      headers: { Authorization: `Bearer ${session.access_token}` },
     })
 
     const result = await response.json()

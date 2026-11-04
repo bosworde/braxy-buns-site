@@ -18,13 +18,12 @@ export default function AdminGuard({
   useEffect(() => {
     const checkAdmin = async () => {
       setChecking(true)
+      setAllowed(false)
 
       const {
         data: { session },
       } = await supabase.auth.getSession()
 
-      console.log("ADMIN SESSION:", session)
-      console.log("ADMIN USER EMAIL:", session?.user?.email)
 
       const user = session?.user
 
@@ -51,7 +50,7 @@ export default function AdminGuard({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      checkAdmin()
+      window.setTimeout(() => { void checkAdmin() }, 0)
     })
 
     return () => {
