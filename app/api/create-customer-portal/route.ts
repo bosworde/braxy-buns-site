@@ -1,33 +1,19 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-
+import { authenticatedMember, MemberError } from "@/lib/member/server"
 export const runtime = "nodejs"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { customerId } = await req.json()
-
-    if (!customerId) {
-      return NextResponse.json(
-        { error: "Missing Stripe customer ID" },
-        { status: 400 }
-      )
-    }
-
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: "https://www.braxybuns.com/account",
+    const { member } = await authenticatedMember(request)
+    if (!member?.stripe_customer_id) throw new MemberError("No billing account is linked to your membership.", 404)
+    if (!process.env.STRIPE_SECRET_KEY) throw new MemberError("Billing is temporarily unavailable.", 503)
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: member.stripe_customer_id,
+      return_url: new URL("/app", process.env.NEXT_PUBLIC_SITE_URL || "https://braxybuns.com").toString(),
     })
-
-    return NextResponse.json({ url: portalSession.url })
-  } catch (err: any) {
-    console.error("Customer portal error:", err)
-
-    return NextResponse.json(
-      { error: err.message || "Could not create customer portal session" },
-      { status: 500 }
-    )
+    return NextResponse.json({ url: portal.url }, { headers: { "Cache-Control": "private, no-store" } })
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof MemberError ? error.message : "We couldn’t open billing. Please try again." }, { status: error instanceof MemberError ? error.status : 500 })
   }
 }
