@@ -8,27 +8,27 @@ type PlanKey = "basic" | "plus" | "max"
 
 const plans = {
   basic: {
-    name: "Basic",
+    name: "Gecko",
     stripeName: "Gecko Wash Club",
     price: "$24.99/mo",
     description: "A fast, reliable premium tunnel wash for everyday shine.",
     features: ["Exterior wash", "Dry", "Free vacuums"],
   },
   plus: {
-    name: "Plus",
+    name: "Iguana",
     stripeName: "Iguana Wash Club",
     price: "$34.99/mo",
     description:
       "Extra finish and detail for drivers who want a deeper clean and brighter finish.",
-    features: ["Everything in Basic", "Wheel clean", "Tire shine", "Spot-free rinse"],
+    features: ["Everything in Gecko", "Wheel clean", "Tire shine", "Spot-free rinse"],
   },
   max: {
-    name: "Max",
+    name: "Dragon",
     stripeName: "Dragon Wash Club",
     price: "$44.99/mo",
     description:
       "Our premium unlimited plan with top-tier protection and the best overall value.",
-    features: ["Everything in Plus", "Ceramic protectant", "Premium finish", "Best value"],
+    features: ["Everything in Iguana", "Ceramic protectant", "Premium finish", "Best value"],
   },
 }
 
@@ -38,7 +38,12 @@ const AUTISM_GRADIENT =
 export default function JoinPage() {
   const [memberEmail, setMemberEmail] = useState("")
   useEffect(() => { void supabase.auth.getUser().then(({ data }) => setMemberEmail(data.user?.email || "")) }, [])
-  const [selectedPlan, setSelectedPlan] = useState<PlanKey>("plus")
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>("basic")
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("plan")
+    const choices: Record<string, PlanKey> = { gecko: "basic", iguana: "plus", dragon: "max" }
+    setSelectedPlan(requested && Object.prototype.hasOwnProperty.call(choices, requested) ? choices[requested] : "basic")
+  }, [])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
 
@@ -130,6 +135,8 @@ export default function JoinPage() {
                   <button
                     key={key}
                     type="button"
+                    disabled={loading}
+                    aria-pressed={active}
                     onClick={() => setSelectedPlan(key)}
                     className={`rounded-[1.5rem] border p-5 text-left transition ${
                       active
@@ -302,7 +309,7 @@ export default function JoinPage() {
                 className="mt-2 rounded-2xl px-6 py-4 text-sm font-semibold text-white shadow-xl transition hover:opacity-95 disabled:opacity-60"
                 style={{ backgroundImage: AUTISM_GRADIENT }}
               >
-                {loading ? "Starting Checkout..." : "Continue to Secure Checkout"}
+                {loading ? "Starting Checkout..." : `Continue with ${selected.name} — ${selected.price}`}
               </button>
 
               {message ? (

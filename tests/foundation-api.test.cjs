@@ -61,3 +61,18 @@ test('checkout refuses an existing active subscription before creating another s
  const response=await route.POST(request({planName:'Dragon Wash Club',email:'victim@example.com',firstName:'A',lastName:'B',licensePlate:'ABC123',vehicleMake:'Ford',vehicleModel:'Explorer',vehicleColor:'White'}));
  assert.equal(response.status,409);assert.equal(created,false);
 });
+
+test('checkout preserves each requested tier and replaces an unpaid checkout for another tier', async () => {
+ for (const planName of Object.keys(stripeModel.prices())) {
+  const wanted=stripeModel.prices()[planName];const calls=[];
+  const previous={customer_id:'cus_owner',session_id:'cs_old',price_id:'price_other'};
+  const db={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:previous})})})}),rpc:async()=>({error:null})};
+  const stripe={subscriptions:{list:async()=>({data:[],has_more:false})},checkout:{sessions:{retrieve:async()=>({id:'cs_old',status:'open',url:'https://checkout.stripe.com/old'}),expire:async id=>{calls.push(['expire',id])},create:async args=>{calls.push(['create',args.line_items[0].price]);return{id:'cs_new',url:'https://checkout.stripe.com/new'}}}}};
+  const route=load('app/api/create-checkout-session/route.ts',{'next/server':next,'node:crypto':{randomUUID:()=> 'attempt'},'@/lib/member/server':{MemberError,authenticatedMember:async()=>({db,user:{id:'user',email:'owner@example.com'},member:{stripe_customer_id:'cus_owner'}})},'@/lib/billing/stripe':{prices:stripeModel.prices,siteOrigin:()=> 'https://example.com',stripeClient:()=>stripe},'@/lib/billing/lock':{billingLock:async(db,email,fn)=>fn('lease')}});
+  const result=await route.POST(request({planName,firstName:'A',lastName:'B',licensePlate:'ABC123',vehicleMake:'Ford',vehicleModel:'Explorer',vehicleColor:'White'}));
+  assert.equal(result.status,200);assert.deepEqual(calls,[['expire','cs_old'],['create',wanted]]);
+  previous.price_id=wanted;calls.length=0;
+  const resumed=await route.POST(request({planName,firstName:'A',lastName:'B',licensePlate:'ABC123',vehicleMake:'Ford',vehicleModel:'Explorer',vehicleColor:'White'}));
+  assert.equal(resumed.body.resumed,true);assert.equal(calls.length,0);
+ }
+});

@@ -32,7 +32,12 @@ export async function POST(request: Request) {
       }
       if (previous?.session_id) {
         const session = await stripe.checkout.sessions.retrieve(previous.session_id)
-        if (session.status === "open" && session.url) return { url: session.url, resumed: true }
+        if (session.status === "open" && session.url) {
+          if (previous.price_id === prices()[body.planName]) return { url: session.url, resumed: true }
+          // Close the old unpaid session before creating checkout for a different plan.
+          // If payment completed concurrently, expiration fails and this request stops.
+          await stripe.checkout.sessions.expire(session.id)
+        }
         if (session.status === "complete") {
           // A completed checkout may be waiting on its webhook. Do not create a second subscription.
           const linked = typeof session.subscription === "string" ? await stripe.subscriptions.retrieve(session.subscription) : null
@@ -40,6 +45,9 @@ export async function POST(request: Request) {
         }
       }
       // Persist the attempt and exact parameters before calling Stripe, so retries use the same key and data.
+      if (previous && !previous.session_id && previous.price_id !== prices()[body.planName]) {
+        throw new MemberError("Your previous checkout is still being prepared. Retry the original plan before switching plans.", 409)
+      }
       const reuseAttempt = previous && !previous.session_id
       const attempt = reuseAttempt ? previous.attempt_id : randomUUID()
       const details = reuseAttempt ? previous.profile as Record<string, string> : profile
