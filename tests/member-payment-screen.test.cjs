@@ -23,7 +23,7 @@ function screen(status, online = true, preopening = false, view = 'pass') {
   const states = [view, { member, visits: [], visitsUnavailable: false }, true, false, false, '', '', false, '', false, false, null, "Gecko", online];
   let i = 0;
   const app = load('app/app/MemberApp.tsx', {
-    ...common, './UnavailablePass': unavailable, './PreopeningProfile': load('app/app/PreopeningProfile.tsx', common),
+    ...common, './RegistrationConfirmation': { __esModule: true, default: () => null }, './UnavailablePass': unavailable, './PreopeningProfile': load('app/app/PreopeningProfile.tsx', common),
     '@/lib/member/model': load('lib/member/model.ts'),
     react: { ...React, useState: () => [states[i++], () => {}], useRef: () => ({ current: 0 }), useEffect: () => {}, useCallback: fn => fn },
     'next/image': { __esModule: true, default: ({ priority, ...props }) => React.createElement('img', props) },
