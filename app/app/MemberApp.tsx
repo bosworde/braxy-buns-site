@@ -10,6 +10,7 @@ import { plans, rewardLevels, rewardProgress, type MemberData } from "@/lib/memb
 import styles from "./member.module.css"
 import UnavailablePass from "./UnavailablePass"
 import PreopeningProfile from "./PreopeningProfile"
+import RegistrationConfirmation, { type RegistrationSuccess } from "./RegistrationConfirmation"
 import { membershipMessage } from "@/lib/member/membership-message"
 
 type View = "home" | "plans" | "pass" | "rewards" | "garage" | "history"
@@ -36,6 +37,7 @@ export default function MemberApp({ preopening = false, initialView = "home" }: 
   const [installPrompt, setInstallPrompt] = useState<InstallEvent | null>(null)
   const [preferredPlan, setPreferredPlan] = useState("Gecko")
   const [online, setOnline] = useState(true)
+  const [registrationSuccess, setRegistrationSuccess] = useState<RegistrationSuccess | null>(null)
 
   const request = useCallback(async (url: string, init: RequestInit = {}) => {
     const { data: { session } } = await (await client()).auth.getSession()
@@ -127,6 +129,7 @@ export default function MemberApp({ preopening = false, initialView = "home" }: 
     const form = new FormData(event.currentTarget)
     try {
       await request("/api/preopening", { method: "POST", body: JSON.stringify({ ...Object.fromEntries(form), acknowledgement: form.get("acknowledgement") === "on" }) })
+      setRegistrationSuccess({ firstName: String(form.get("first_name") || "").trim(), plan: String(form.get("preferred_plan") || ""), isNew: !data.member })
       await load(); setMessage("You’re registered as a free pre-opening member. Your profile is saved. No payment or subscription has been created.")
     } catch (error) { setMessage(error instanceof Error ? error.message : "Couldn’t save your registration.") } finally { setBusy(false) }
   }
@@ -173,6 +176,7 @@ export default function MemberApp({ preopening = false, initialView = "home" }: 
       </>}
       </div><footer className={styles.footer}><span>GOOD CLEAN FUN. REAL HUMAN IMPACT.</span><Link href="/contact">Need a hand? Get in touch <ArrowUpRight size={12} /></Link></footer>
     </main>
+    {registrationSuccess && <RegistrationConfirmation registration={registrationSuccess} onContinue={() => { setRegistrationSuccess(null); go("home") }} onClose={() => { setRegistrationSuccess(null); window.scrollTo({ top: 0, behavior: "smooth" }) }} />}
     {(loginOpen || installOpen) && <div className={styles.overlay} onClick={event => { if (event.target === event.currentTarget) { setLoginOpen(false); setInstallOpen(false) } }}><section role="dialog" aria-modal="true" aria-labelledby="member-dialog-title" className={styles.modal} onKeyDown={event => { if (event.key !== "Tab") return; const elements = event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]'); const first = elements[0]; const last = elements[elements.length - 1]; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() } }}><button className={styles.close} autoFocus onClick={() => { setLoginOpen(false); setInstallOpen(false) }} aria-label="Close dialog"><X size={22} /></button>{loginOpen ? <><ShieldCheck size={32} /><h2 id="member-dialog-title">Welcome to the club.</h2><p>{preopening ? "Enter your email to create a free account or return to your pre-opening profile. We’ll send you a secure sign-in link." : "Use your membership email. We’ll send a secure sign-in link—no password to remember."}</p><form onSubmit={signIn}><label>Email address<input type="email" autoComplete="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" /></label><button className={styles.primaryButton} disabled={busy || !online}>{busy ? "Sending…" : "Send sign-in link"}</button></form>{message && <p role="status">{message}</p>}</> : <><Download size={32} /><h2 id="member-dialog-title">Your club, one tap away.</h2><p><strong>iPhone or iPad:</strong> Open this page in Safari, tap Share, then Add to Home Screen.</p><p><strong>Android:</strong> Open the browser menu and choose Install app or Add to Home screen when available.</p><p className={styles.note}>This app uses braxybuns.com. An internet connection is needed for your account and wash pass.</p></>}</section></div>}
   </div>
 }
