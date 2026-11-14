@@ -30,6 +30,11 @@
     "plugins": [
       "expo-secure-store"
     ],
-    "owner": "braxy-buns-car-wash-team"
+    "owner": "braxy-buns-car-wash-team",
+    "extra": {
+      "eas": {
+        "projectId": "f7645e5b-dec9-40c1-89e5-6209536a8e54"
+      }
+    }
   }
 }
