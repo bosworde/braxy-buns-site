@@ -1,0 +1,25 @@
+{
+  "name": "braxy-buns-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo/AppEntry",
+  "scripts": {
+    "start": "expo start",
+    "typecheck": "tsc --noEmit",
+    "bundle:check": "expo export --platform ios --platform android"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.107.0",
+    "expo": "55.0.32",
+    "expo-secure-store": "55.0.18",
+    "expo-system-ui": "55.0.22",
+    "react": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-safe-area-context": "5.6.2",
+    "react-native-url-polyfill": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "typescript": "~5.9.2"
+  }
+}

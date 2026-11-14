@@ -34,3 +34,62 @@ test('pre-opening registration list requires administrator verification', async 
  });
  assert.equal((await route.GET(new Request('https://example.com/api/admin/preopening'))).status,403);
 });
+
+test('account deletion requires verified ownership and protects staff and linked memberships', async () => {
+  const calls = [];
+  let denied = false;
+  let email = 'customer@example.com';
+  let members = [];
+  let revokeFails = false;
+  const db = {
+    from: table => {
+      assert.equal(table, 'members');
+      return { select: () => ({ eq: (field, value) => {
+        assert.equal(field, 'email');
+        assert.equal(value, email);
+        return { limit: async () => ({ data: members, error: null }) };
+      } }) };
+    },
+    auth: { admin: {
+      signOut: async (token, scope) => {
+        calls.push(['revoke', token, scope]);
+        return { error: revokeFails ? new Error('Failed to revoke') : null };
+      },
+      deleteUser: async id => { calls.push(['delete', id]); return { error: null }; },
+    } },
+  };
+  const route = load('app/api/account/delete/route.ts', {
+    'next/server': { NextResponse: { json: (body, options) => ({ body, status: options.status || 200 }) } },
+    '@/lib/member/server': {
+      ADMIN_EMAILS: ['staff@example.com'],
+      MemberError,
+      authenticatedUser: async () => {
+        if (denied) throw new MemberError('Unauthorized', 401);
+        return { db, user: { id: 'verified-user' }, email };
+      },
+    },
+    '@/lib/member/launch': { preopening: () => true },
+  });
+  const remove = (confirm = 'DELETE') => route.POST(new Request('https://example.com/api/account/delete', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer demo-token' },
+    body: JSON.stringify({ confirm, userId: 'another-user' }),
+  }));
+  denied = true;
+  assert.equal((await remove()).status, 401);
+  denied = false;
+  assert.equal((await remove('')).status, 400);
+  email = 'staff@example.com';
+  assert.equal((await remove()).status, 409);
+  email = 'customer@example.com';
+  members = [{ id: 'existing-membership' }];
+  assert.equal((await remove()).status, 409);
+  assert.deepEqual(calls, []);
+  members = [];
+  revokeFails = true;
+  assert.equal((await remove()).status, 503);
+  assert.deepEqual(calls.splice(0), [['revoke', 'demo-token', 'global']]);
+  revokeFails = false;
+  assert.equal((await remove()).status, 200);
+  assert.deepEqual(calls, [['revoke', 'demo-token', 'global'], ['delete', 'verified-user']]);
+});
