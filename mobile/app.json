@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Braxy Buns Car Wash",
+    "slug": "braxy-buns-car-wash",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "bundleIdentifier": "com.braxybuns.washclub",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.braxybuns.washclub",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#081829"
+      },
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "owner": "braxy-buns-car-wash-team",
+    "extra": {
+      "eas": {
+        "projectId": "f7645e5b-dec9-40c1-89e5-6209536a8e54"
+      }
+    }
+  }
+}
