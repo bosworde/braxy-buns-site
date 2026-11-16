@@ -4,16 +4,25 @@ import {
   ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
+import { LinearGradient } from 'expo-linear-gradient'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import type { Session } from '@supabase/supabase-js'
 import { plans, rewardLevels } from '../lib/member/model'
 import { auth, memberRequest, origin } from './client'
 
 const tabs = ['Home', 'Clubs', 'Garage', 'Rewards', 'Account'] as const
 type Tab = typeof tabs[number]
+const tabIcons = {
+  Home: 'home-outline', Clubs: 'sparkles-outline', Garage: 'car-outline',
+  Rewards: 'gift-outline', Account: 'person-circle-outline',
+} as const
+const brand = ['#E40303', '#FF8C00', '#FFED00', '#008026', '#004DFF', '#750787'] as const
+const brandStops = [0, 0.18, 0.34, 0.50, 0.68, 1] as const
+const cyan = '#67E8F9'
 const clubArt = {
-  Gecko: require('./assets/gecko.png'),
-  Iguana: require('./assets/iguana.png'),
-  Dragon: require('./assets/dragon.png'),
+  Gecko: { source: require('./assets/gecko.png'), width: 210, centerY: 269, tint: '#C7F36A', shade: '#233D24' },
+  Iguana: { source: require('./assets/iguana.png'), width: 211, centerY: 260, tint: '#7DDCFF', shade: '#0E3D5A' },
+  Dragon: { source: require('./assets/dragon.png'), width: 210, centerY: 264, tint: '#FFD27B', shade: '#4A3024' },
 }
 type Club = keyof typeof clubArt
 const fields = [
@@ -27,14 +36,45 @@ const empty: Profile = {
   vehicle_color: '', license_plate: '', preferred_plan: 'Gecko',
 }
 
-function Button({ label, onPress, secondary = false, disabled = false }: {
-  label: string; onPress: () => void; secondary?: boolean; disabled?: boolean
+function BrandGradient({ children }: { children?: ReactNode }) {
+  return (
+    <LinearGradient colors={brand} locations={brandStops} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+      style={children ? styles.buttonBorder : styles.brandLine}>
+      {children}
+    </LinearGradient>
+  )
+}
+
+function ClubArtwork({ club, size = 'card' }: { club: Club; size?: 'card' | 'hero' | 'compact' }) {
+  const art = clubArt[club]
+  const width = { card: 244, hero: 198, compact: 110 }[size]
+  const height = { card: 188, hero: 150, compact: 84 }[size]
+  const scale = width / art.width
+  // Center the visible mascot within the original transparent website artwork.
+  return (
+    <View accessible={false} pointerEvents="none" style={[styles.artFrame, { width, height }]}>
+      <Image source={art.source} accessible={false} resizeMode="stretch" style={{
+        width, height: 420 * scale, position: 'absolute', top: height / 2 - art.centerY * scale,
+      }} />
+    </View>
+  )
+}
+
+function Button({ label, onPress, secondary = false, disabled = false, accent }: {
+  label: string; onPress: () => void; secondary?: boolean; disabled?: boolean; accent?: string
 }) {
+  const content = (
+    <View style={[styles.button, secondary && styles.secondary, accent && { borderColor: accent, borderWidth: 1 }]}>
+      <Text style={[styles.buttonLabel, accent && { color: accent }]}>{label}</Text>
+      {!secondary && <Ionicons name="arrow-forward" size={17} color={accent || cyan} />}
+    </View>
+  )
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled }}
-      style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]}
+      accessibilityLabel={label}
+      style={({ pressed }) => ((disabled || pressed) ? styles.disabled : undefined)}
       onPress={onPress} disabled={disabled}>
-      <Text style={[styles.buttonLabel, secondary && styles.secondaryLabel]}>{label}</Text>
+      {secondary || accent ? content : <BrandGradient>{content}</BrandGradient>}
     </Pressable>
   )
 }
@@ -71,6 +111,8 @@ function WashClub() {
   const [confirmation, setConfirmation] = useState<{ name: string; club: Club; isNew: boolean } | null>(null)
   const userId = session?.user.id
   const token = session?.access_token
+  const preferredClub = profile?.preferred_plan
+  const homeArtwork = preferredClub && Object.hasOwn(clubArt, preferredClub) ? preferredClub : 'Dragon'
 
   useEffect(() => {
     if (!auth) return
@@ -205,7 +247,7 @@ function WashClub() {
 
   function form() {
     if (!auth) return <Text style={styles.body}>Account sign-in is unavailable in this build.</Text>
-    if (initializing) return <ActivityIndicator color="#5de6e8" />
+    if (initializing) return <ActivityIndicator color={cyan} />
     if (!userId) return (
       <Card>
         <Text style={styles.cardTitle}>{sentTo ? 'Enter your email code' : 'Sign in or register free'}</Text>
@@ -221,7 +263,7 @@ function WashClub() {
     )
     if (!profileReady) return error
       ? <Button label="Retry loading profile" onPress={() => { setError(''); setRetry(value => value + 1) }} />
-      : <ActivityIndicator color="#5de6e8" />
+      : <ActivityIndicator color={cyan} />
     return (
       <Card>
         {fields.map(([field, label], index) => (
@@ -233,12 +275,19 @@ function WashClub() {
           </View>
         ))}
         <Text style={styles.label}>Preferred wash club</Text>
-        {plans.map(plan => (
-          <Pressable key={plan.name} accessibilityRole="radio" accessibilityState={{ checked: (chosen || draft.preferred_plan) === plan.name }}
-            onPress={() => setChosen(plan.name as Club)} style={[styles.choice, (chosen || draft.preferred_plan) === plan.name && styles.selected]}>
-            <Text style={styles.label}>{plan.name}</Text>
-          </Pressable>
-        ))}
+        {plans.map(plan => {
+          const club = plan.name as Club
+          const { tint } = clubArt[club]
+          const checked = (chosen || draft.preferred_plan) === club
+          return (
+            <Pressable key={club} accessibilityRole="radio" accessibilityLabel={club} accessibilityState={{ checked }}
+              onPress={() => setChosen(club)} style={[styles.choice, checked && styles.selected, checked && { borderColor: tint }]}>
+              <View style={[styles.choiceDot, { backgroundColor: tint }]} />
+              <Text style={[styles.label, styles.flex]}>{club}</Text>
+              <Ionicons name={checked ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={checked ? tint : '#8FA8B9'} />
+            </Pressable>
+          )
+        })}
         <View style={styles.consent}>
           <Text style={[styles.body, styles.flex]}>I understand registration is free and wash access requires separate paid enrollment after opening.</Text>
           <Switch accessibilityLabel="Acknowledge free pre-opening registration" value={acknowledged} onValueChange={setAcknowledged} />
@@ -253,32 +302,69 @@ function WashClub() {
       <StatusBar barStyle="light-content" />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView key={tab} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-          <Image source={require('./assets/logo.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="Braxy Buns Car Wash" />
+          <View style={styles.masthead}>
+            <View style={styles.logoFrame}>
+              <Image source={require('./assets/logo.png')} style={styles.logo} resizeMode="stretch"
+                accessible accessibilityLabel="Braxy Buns Car Wash" />
+            </View>
+            <BrandGradient />
+          </View>
           {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{error}</Text>}
           {tab === 'Home' && <>
-            <Heading title={profile ? `Welcome, ${profile.first_name}.` : 'Your wash club. In your pocket.'}
-              subtitle="Braxy Buns is preparing to open. Save your vehicle and preferred club with a free pre-opening account." />
+            <LinearGradient colors={['#0A2B4B', '#071B33']} style={styles.hero}>
+              <Text style={styles.eyebrow}>{profile ? 'PRE-OPENING MEMBER' : 'FREE PRE-OPENING REGISTRATION'}</Text>
+              <Heading title={profile ? `Welcome, ${profile.first_name}.` : 'Your wash club. In your pocket.'}
+                subtitle={profile ? `Your preferred club is ${profile.preferred_plan}.` : 'Save your vehicle and pick the club you’re interested in. Registration is free.'} />
+              <ClubArtwork club={homeArtwork} size="hero" />
+              <Button label={profile ? 'View my garage' : 'Join free'} onPress={() => navigate('Garage')} />
+              <Button label="Compare wash clubs" secondary onPress={() => navigate('Clubs')} />
+            </LinearGradient>
             <Card>
-              <Text style={styles.cardTitle}>{profile ? 'You’re registered' : 'Join free before opening'}</Text>
-              <Text style={styles.body}>{profile ? `Your preferred club is ${profile.preferred_plan}.` : 'No card, payment, or subscription is required.'}</Text>
-              <Button label={profile ? 'View my garage' : 'Get started'} onPress={() => navigate('Garage')} />
+              <View style={styles.withIcon}>
+                <Ionicons name="qr-code-outline" size={22} color={cyan} />
+                <Text style={[styles.cardTitle, styles.flex]}>Wash access</Text>
+              </View>
+              <Text style={styles.body}>Live wash passes and wash history will be available after opening and paid enrollment.</Text>
             </Card>
-            <Card><Text style={styles.cardTitle}>Wash access</Text><Text style={styles.body}>Live wash passes and wash history will be available after opening and paid enrollment.</Text></Card>
           </>}
           {tab === 'Clubs' && <>
             <Heading title="Find your kind of shine." subtitle="Compare planned clubs and save the one you’re interested in." />
-            {plans.map(plan => <Card key={plan.name}>
-              <Image source={clubArt[plan.name as Club]} accessibilityLabel={plan.name + ' mascot'} resizeMode="contain" style={styles.mascot} />
-              <Text style={styles.cardTitle}>{plan.name} Wash Club</Text>
-              <Text style={styles.body}>${plan.price}/month · planned</Text>
-              <Text style={styles.body}>{plan.features.join(' • ')}</Text>
-              <Button label={'Interested in ' + plan.name} onPress={() => choose(plan.name as Club)} />
-            </Card>)}
+            {plans.map(plan => {
+              const club = plan.name as Club
+              const { tint, shade } = clubArt[club]
+              return (
+                <Card key={club}>
+                  <LinearGradient colors={[shade, '#0B1D31']} style={styles.clubBanner}>
+                    <ClubArtwork club={club} />
+                  </LinearGradient>
+                  <Text accessibilityRole="header" style={[styles.cardTitle, { color: tint }]}>{club} Wash Club</Text>
+                  <Text style={styles.body}>{plan.description}</Text>
+                  <Text style={styles.price}>${plan.price}<Text style={styles.priceSuffix}> / month · planned</Text></Text>
+                  <View style={styles.features}>
+                    {plan.features.map(feature => (
+                      <View key={feature} style={styles.withIcon}>
+                        <Ionicons name="checkmark" size={17} color={tint} />
+                        <Text style={[styles.body, styles.flex]}>{feature}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Button label={`Interested in ${club}`} accent={tint} onPress={() => choose(club)} />
+                </Card>
+              )
+            })}
           </>}
           {tab === 'Garage' && <><Heading title="My Garage" subtitle="Save your club preference and optional vehicle details." />{form()}</>}
           {tab === 'Rewards' && <>
             <Heading title="Braxy Bucks" subtitle="A preview of planned rewards. Earning and redemption open later." />
-            <Card>{rewardLevels.map(level => <Text key={level.points} style={styles.body}>{level.points} points · {level.reward}</Text>)}</Card>
+            <Card>
+              {rewardLevels.map(level => (
+                <View key={level.points} style={styles.rewardRow}>
+                  <Ionicons name="gift-outline" size={22} color="#FFD27B" />
+                  <Text style={[styles.label, styles.flex]}>{level.reward}</Text>
+                  <Text style={styles.rewardPoints}>{level.points} pts</Text>
+                </View>
+              ))}
+            </Card>
           </>}
           {tab === 'Account' && <>
             <Heading title="Account" subtitle={session?.user.email || 'Manage your Braxy Buns account.'} />
@@ -297,8 +383,9 @@ function WashClub() {
         </ScrollView>
         <View accessibilityRole="tablist" style={styles.tabs}>
           {tabs.map(item => (
-            <Pressable key={item} accessibilityRole="tab" accessibilityState={{ selected: tab === item }}
-              onPress={() => navigate(item)} style={[styles.tab, tab === item && styles.selected]}>
+            <Pressable key={item} accessibilityRole="tab" accessibilityLabel={item} accessibilityState={{ selected: tab === item }}
+              onPress={() => navigate(item)} style={({ pressed }) => [styles.tab, tab === item && styles.selected, pressed && styles.disabled]}>
+              <Ionicons name={tabIcons[item]} size={22} color={tab === item ? cyan : '#A7BED0'} />
               <Text style={[styles.tabText, tab === item && styles.activeText]}>{item}</Text>
             </Pressable>
           ))}
@@ -310,7 +397,13 @@ function WashClub() {
             {confirmation && <Card>
               <Text accessibilityRole="header" style={styles.title}>{confirmation.isNew ? `You’re in, ${confirmation.name}!` : 'Your profile is updated!'}</Text>
               <Text style={styles.body}>{confirmation.isNew ? 'Thanks for joining the Braxy Buns pre-opening club.' : 'Your latest details are saved.'}</Text>
-              <Text style={styles.label}>{confirmation.club} Wash Club · saved preference</Text>
+              <View style={styles.savedClub}>
+                <ClubArtwork club={confirmation.club} size="compact" />
+                <View style={styles.flex}>
+                  <Text style={styles.body}>Saved preference</Text>
+                  <Text style={[styles.label, { color: clubArt[confirmation.club].tint }]}>{confirmation.club} Wash Club</Text>
+                </View>
+              </View>
               <Text style={styles.body}>Free registration. No payment or subscription was created.</Text>
               <Button label="Explore my club" onPress={() => { setConfirmation(null); navigate('Home') }} />
               <Button label="Review my profile" secondary onPress={() => setConfirmation(null)} />
@@ -327,31 +420,45 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#081829' },
+  safe: { flex: 1, backgroundColor: '#061426' },
   flex: { flex: 1 },
-  content: { padding: 20, gap: 14, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  logo: { width: 235, height: 80, alignSelf: 'center', marginBottom: 10 },
+  content: { padding: 20, paddingTop: 8, paddingBottom: 24, gap: 16, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  masthead: { gap: 12, alignItems: 'center' },
+  logoFrame: { width: '100%', maxWidth: 328, aspectRatio: 534 / 200, alignItems: 'center' },
+  logo: { position: 'absolute', width: '168.54%', height: '108%', left: '-34.27%', top: '-4%' },
+  brandLine: { width: '100%', height: 3, borderRadius: 2 },
+  hero: { gap: 12, padding: 18, borderRadius: 22, borderWidth: 1, borderColor: '#294861' },
+  eyebrow: { color: cyan, fontSize: 12, fontWeight: '800', letterSpacing: 1.5 },
   heading: { gap: 10, marginBottom: 5 },
   title: { color: '#fff', fontSize: 33, fontWeight: '800', letterSpacing: -1 },
-  body: { color: '#c2d7e5', fontSize: 16, lineHeight: 24 },
-  card: { gap: 12, padding: 18, borderWidth: 1, borderColor: '#27445a', backgroundColor: '#10263a', borderRadius: 18 },
-  cardTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  body: { color: '#C2D7E5', fontSize: 16, lineHeight: 24 },
+  card: { gap: 12, padding: 18, borderWidth: 1, borderColor: '#294258', backgroundColor: '#122031', borderRadius: 20 },
+  cardTitle: { color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: -0.4 },
   label: { color: '#f1f8ff', fontSize: 16, fontWeight: '600' },
-  input: { minHeight: 48, marginTop: 7, borderRadius: 10, borderColor: '#456278', borderWidth: 1, color: '#fff', padding: 12, fontSize: 16 },
-  button: { minHeight: 48, borderRadius: 10, backgroundColor: '#66ece9', alignItems: 'center', justifyContent: 'center', padding: 11 },
-  buttonLabel: { color: '#081829', textAlign: 'center', fontWeight: '700', fontSize: 16 },
+  input: { minHeight: 48, marginTop: 7, borderRadius: 10, borderColor: '#456278', borderWidth: 1, backgroundColor: '#061426', color: '#fff', padding: 12, fontSize: 16 },
+  buttonBorder: { borderRadius: 13, padding: 2 },
+  button: { minHeight: 48, borderRadius: 11, backgroundColor: '#071B33', flexDirection: 'row', gap: 9, alignItems: 'center', justifyContent: 'center', padding: 11 },
+  buttonLabel: { flexShrink: 1, color: '#fff', textAlign: 'center', fontWeight: '700', fontSize: 16 },
   secondary: { backgroundColor: 'transparent', borderColor: '#456278', borderWidth: 1 },
-  secondaryLabel: { color: '#e5f9ff' },
   disabled: { opacity: 0.48 },
-  choice: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 9, borderWidth: 1, borderColor: '#456278' },
-  selected: { backgroundColor: '#23455c', borderColor: '#66ece9' },
+  choice: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 9, borderWidth: 1, borderColor: '#456278' },
+  choiceDot: { width: 8, height: 8, borderRadius: 4 },
+  selected: { backgroundColor: '#193449', borderColor: '#3E7B91' },
   consent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  mascot: { height: 95, width: 150, alignSelf: 'center' },
+  clubBanner: { alignItems: 'center', justifyContent: 'center', borderRadius: 14, overflow: 'hidden' },
+  artFrame: { alignSelf: 'center', alignItems: 'center', overflow: 'hidden' },
+  price: { color: '#fff', fontSize: 29, fontWeight: '800', letterSpacing: -0.7 },
+  priceSuffix: { color: '#C2D7E5', fontSize: 14, fontWeight: '500', letterSpacing: 0 },
+  features: { gap: 6, marginBottom: 4 },
+  withIcon: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
+  rewardPoints: { color: '#FFD27B', fontSize: 15, fontWeight: '700' },
   error: { backgroundColor: '#3a2435', padding: 13, borderRadius: 10, color: '#ffd5e8', fontSize: 16 },
-  tabs: { flexDirection: 'row', gap: 3, padding: 6, borderTopWidth: 1, borderColor: '#27445a' },
-  tab: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 8, borderWidth: 1, borderColor: 'transparent' },
-  tabText: { fontSize: 12, color: '#bfd3e1', fontWeight: '700' },
+  tabs: { flexDirection: 'row', gap: 3, padding: 6, borderTopWidth: 1, borderColor: '#294258' },
+  tab: { flex: 1, minHeight: 54, gap: 3, alignItems: 'center', justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: 'transparent' },
+  tabText: { fontSize: 12, color: '#bfd3e1', fontWeight: '700', textAlign: 'center' },
   activeText: { color: '#fff' },
   overlay: { flex: 1, backgroundColor: '#000c' },
   modalBody: { flexGrow: 1, justifyContent: 'center', padding: 25 },
+  savedClub: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#071B33', borderRadius: 12, paddingRight: 8 },
 })
