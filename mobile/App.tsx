@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import {
-  ActivityIndicator, Alert, AppState, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable,
+  ActivityIndicator, Alert, AppState, Image, Keyboard, KeyboardAvoidingView, Linking, Modal, Platform, Pressable,
   ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
@@ -31,9 +31,27 @@ const fields = [
 ] as const
 type Field = typeof fields[number][0]
 type Profile = Record<Field, string> & { preferred_plan: Club }
+type SavedProfile = { [Key in keyof Profile]?: Profile[Key] | null }
 const empty: Profile = {
   first_name: '', last_name: '', vehicle_make: '', vehicle_model: '',
   vehicle_color: '', license_plate: '', preferred_plan: 'Gecko',
+}
+
+function profileDraft(saved: SavedProfile): Profile {
+  const draft = { ...empty }
+  for (const [field] of fields) draft[field] = saved[field]?.trim() || ''
+  draft.license_plate = draft.license_plate.replace(/\s+/g, '').toUpperCase()
+  if (saved.preferred_plan && Object.hasOwn(clubArt, saved.preferred_plan)) {
+    draft.preferred_plan = saved.preferred_plan
+  }
+  return draft
+}
+
+function vehicleLabel(profile: Profile) {
+  return [
+    [profile.vehicle_make, profile.vehicle_model].filter(Boolean).join(' '),
+    profile.vehicle_color, profile.license_plate,
+  ].filter(Boolean).join(' · ')
 }
 
 function BrandGradient({ children }: { children?: ReactNode }) {
@@ -97,12 +115,15 @@ function WashClub() {
   const [initializing, setInitializing] = useState(Boolean(auth))
   const [profile, setProfile] = useState<Profile | null>(null)
   const [profileReady, setProfileReady] = useState(false)
+  const [profileError, setProfileError] = useState('')
   const [retry, setRetry] = useState(0)
   const [draft, setDraft] = useState<Profile>(empty)
   const [chosen, setChosen] = useState<Club | null>(null)
+  const [showVehicle, setShowVehicle] = useState(false)
   const [email, setEmail] = useState('')
   const [sentTo, setSentTo] = useState('')
   const [code, setCode] = useState('')
+  const [codeNotice, setCodeNotice] = useState('')
   const [passwordMode, setPasswordMode] = useState(false)
   const [password, setPassword] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
@@ -111,8 +132,9 @@ function WashClub() {
   const [confirmation, setConfirmation] = useState<{ name: string; club: Club; isNew: boolean } | null>(null)
   const userId = session?.user.id
   const token = session?.access_token
-  const preferredClub = profile?.preferred_plan
-  const homeArtwork = preferredClub && Object.hasOwn(clubArt, preferredClub) ? preferredClub : 'Dragon'
+  const address = email.trim().toLowerCase()
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)
+  const validCode = /^\d{6,}$/.test(code)
 
   useEffect(() => {
     if (!auth) return
@@ -133,6 +155,7 @@ function WashClub() {
   }, [])
 
   useEffect(() => {
+    setProfileError('')
     if (!auth || !userId) {
       setProfile(null)
       setProfileReady(false)
@@ -144,21 +167,21 @@ function WashClub() {
     auth.getSession().then(({ data }) => {
       const current = data.session
       if (current?.user.id !== userId) throw new Error('Sign in again to load your profile.')
-      return memberRequest<{ member: Profile | null }>('/api/preopening', current.access_token)
+      return memberRequest<{ member: SavedProfile | null }>('/api/preopening', current.access_token)
     })
       .then(data => {
         if (!active) return
-        setProfile(data.member)
-        setDraft(data.member || empty)
+        const loaded = data.member ? profileDraft(data.member) : null
+        setProfile(loaded)
+        setDraft(loaded || empty)
         setProfileReady(true)
       })
-      .catch(error => { if (active) setError(message(error)) })
+      .catch(error => { if (active) setProfileError(message(error)) })
     return () => { active = false }
   }, [userId, retry])
 
   function navigate(next: Tab) {
     setError('')
-    if (next === 'Garage' && token && !profileReady) setRetry(value => value + 1)
     setTab(next)
   }
 
@@ -167,39 +190,43 @@ function WashClub() {
     navigate('Garage')
   }
 
-  async function signIn(verify: boolean) {
-    if (!auth) return
+  async function signIn(action: 'send' | 'verify' | 'password') {
+    if (!auth || busy) return
     setBusy(true)
     setError('')
+    setCodeNotice('')
     try {
-      if (passwordMode) {
-        const { error } = await auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+      if (action === 'password') {
+        const { error } = await auth.signInWithPassword({ email: address, password })
         if (error) throw error
         setPassword('')
         setTab('Garage')
-      } else if (verify) {
-        const { error } = await auth.verifyOtp({ email: sentTo, token: code.trim(), type: 'email' })
+      } else if (action === 'verify') {
+        const { error } = await auth.verifyOtp({ email: sentTo, token: code, type: 'email' })
         if (error) throw error
         setSentTo('')
         setCode('')
         setTab('Garage')
       } else {
-        const address = email.trim().toLowerCase()
-        const { error } = await auth.signInWithOtp({ email: address })
+        const recipient = sentTo || address
+        const { error } = await auth.signInWithOtp({ email: recipient })
         if (error) throw error
-        setSentTo(address)
+        if (sentTo) setCodeNotice('A fresh code is on its way. Use the newest email.')
+        setCode('')
+        setSentTo(recipient)
       }
     } catch (error) { setError(message(error)) }
     finally { setBusy(false) }
   }
 
   async function save() {
-    if (!token || !profileReady) return
+    if (!token || !profileReady || busy) return
     setBusy(true)
     setError('')
     try {
-      const next = { ...draft, preferred_plan: chosen || draft.preferred_plan }
+      const next = profileDraft({ ...draft, preferred_plan: chosen || draft.preferred_plan })
       await memberRequest('/api/preopening', token, 'POST', { ...next, acknowledgement: acknowledged })
+      Keyboard.dismiss()
       setConfirmation({ name: next.first_name.trim(), club: next.preferred_plan, isNew: !profile })
       setDraft(next)
       setProfile(next)
@@ -212,14 +239,17 @@ function WashClub() {
   function resetProfile() {
     setProfile(null)
     setProfileReady(false)
+    setProfileError('')
     setDraft(empty)
     setChosen(null)
+    setShowVehicle(false)
     setAcknowledged(false)
     setEmail('')
     setPassword('')
     setPasswordMode(false)
     setSentTo('')
     setCode('')
+    setCodeNotice('')
     setConfirmation(null)
     setError('')
     setTab('Home')
@@ -245,35 +275,66 @@ function WashClub() {
     finally { setBusy(false) }
   }
 
+  function profileLoading() {
+    if (profileError) return (
+      <Card>
+        <Text accessibilityRole="alert" style={styles.error}>{profileError}</Text>
+        <Button label="Retry loading profile" onPress={() => { setProfileError(''); setRetry(value => value + 1) }} />
+      </Card>
+    )
+    return <ActivityIndicator accessibilityLabel="Loading your profile" color={cyan} />
+  }
+
+  function profileField(field: Field, label: string) {
+    return (
+      <View key={field}>
+        <Text style={styles.label}>{label}</Text>
+        <TextInput accessibilityLabel={label} style={styles.input} value={draft[field]} maxLength={50}
+          autoCapitalize={field === 'license_plate' ? 'characters' : 'words'}
+          onChangeText={value => setDraft(current => ({ ...current, [field]: value }))} />
+      </View>
+    )
+  }
+
   function form() {
     if (!auth) return <Text style={styles.body}>Account sign-in is unavailable in this build.</Text>
     if (initializing) return <ActivityIndicator color={cyan} />
-    if (!userId) return (
-      <Card>
-        <Text style={styles.cardTitle}>{sentTo ? 'Enter your email code' : 'Sign in or register free'}</Text>
-        <Text style={styles.body}>{sentTo ? `Enter the one-time code sent to ${sentTo}.` : passwordMode ? 'Use the password provided for your demo account.' : 'We’ll send a one-time code to your email.'}</Text>
-        {sentTo
-          ? <TextInput accessibilityLabel="Email code" style={styles.input} keyboardType="number-pad" autoComplete="one-time-code" value={code} onChangeText={setCode} />
-          : <TextInput accessibilityLabel="Email address" style={styles.input} autoCapitalize="none" keyboardType="email-address" autoComplete="email" value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor="#8fa8b9" />}
-        {passwordMode && <TextInput accessibilityLabel="Password" style={styles.input} secureTextEntry autoCapitalize="none" value={password} onChangeText={setPassword} />}
-        <Button label={passwordMode ? 'Sign in' : sentTo ? 'Verify code' : 'Send email code'} onPress={() => void signIn(Boolean(sentTo))} disabled={busy || (sentTo ? code.trim().length < 6 : !email.includes('@') || (passwordMode && !password))} />
-        {!sentTo && <Button label={passwordMode ? 'Use email code' : 'Sign in to a demo account'} secondary disabled={busy} onPress={() => { setPasswordMode(!passwordMode); setPassword(''); setError('') }} />}
-        {sentTo && <Button label="Change email or request another code" secondary disabled={busy} onPress={() => { setSentTo(''); setCode(''); setError('') }} />}
-      </Card>
-    )
-    if (!profileReady) return error
-      ? <Button label="Retry loading profile" onPress={() => { setError(''); setRetry(value => value + 1) }} />
-      : <ActivityIndicator color={cyan} />
+    if (!userId) {
+      const action = sentTo ? 'verify' : passwordMode ? 'password' : 'send'
+      const disabled = busy || (sentTo ? !validCode : !validEmail || (passwordMode && !password))
+      return (
+        <Card>
+          <Text accessibilityRole="header" style={styles.cardTitle}>{sentTo ? 'Check your email' : 'Sign in or register free'}</Text>
+          <Text style={styles.body}>{sentTo ? `Enter the one-time code sent to ${sentTo}.`
+            : passwordMode ? 'Use the password provided for your demo account.' : 'We’ll email you a one-time code. No password needed.'}</Text>
+          {sentTo
+            ? <TextInput key="code" accessibilityLabel="Email code" style={[styles.input, styles.codeInput]} keyboardType="number-pad"
+                autoComplete="one-time-code" autoFocus editable={!busy} value={code} onChangeText={value => setCode(value.replace(/\D/g, ''))}
+                placeholder="Enter code" placeholderTextColor="#8FA8B9" />
+            : <TextInput key="email" accessibilityLabel="Email address" style={styles.input} autoCapitalize="none" autoCorrect={false}
+                keyboardType="email-address" autoComplete="email" editable={!busy} value={email} onChangeText={setEmail}
+                placeholder="Email address" placeholderTextColor="#8FA8B9" returnKeyType="go" onSubmitEditing={() => { if (!passwordMode && !disabled) void signIn('send') }} />}
+          {passwordMode && <TextInput accessibilityLabel="Password" placeholder="Password" placeholderTextColor="#8FA8B9"
+            style={styles.input} secureTextEntry autoCapitalize="none" editable={!busy} value={password} onChangeText={setPassword} />}
+          {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{error}</Text>}
+          {codeNotice && <Text accessibilityLiveRegion="polite" style={styles.body}>{codeNotice}</Text>}
+          <Button label={busy ? 'One moment…' : sentTo ? 'Verify code' : passwordMode ? 'Sign in' : 'Send email code'}
+            onPress={() => void signIn(action)} disabled={disabled} />
+          {sentTo
+            ? <>
+                <Button label="Resend code" secondary disabled={busy} onPress={() => void signIn('send')} />
+                <Button label="Change email address" secondary disabled={busy} onPress={() => { setSentTo(''); setCode(''); setCodeNotice(''); setError('') }} />
+              </>
+            : <Button label={passwordMode ? 'Use email code' : 'Sign in to a demo account'} secondary disabled={busy}
+                onPress={() => { setPasswordMode(!passwordMode); setPassword(''); setError('') }} />}
+        </Card>
+      )
+    }
+    if (!profileReady) return profileLoading()
     return (
       <Card>
-        {fields.map(([field, label], index) => (
-          <View key={field}>
-            <Text style={styles.label}>{label}{index > 1 && ' (optional)'}</Text>
-            <TextInput accessibilityLabel={label} style={styles.input} value={draft[field]} maxLength={50}
-              autoCapitalize={field === 'license_plate' ? 'characters' : 'words'}
-              onChangeText={value => setDraft(current => ({ ...current, [field]: value }))} />
-          </View>
-        ))}
+        <Text accessibilityRole="header" style={styles.cardTitle}>{profile ? 'Your profile' : 'Finish your free registration'}</Text>
+        {fields.slice(0, 2).map(([field, label]) => profileField(field, label))}
         <Text style={styles.label}>Preferred wash club</Text>
         {plans.map(plan => {
           const club = plan.name as Club
@@ -288,10 +349,21 @@ function WashClub() {
             </Pressable>
           )
         })}
+        <Pressable accessibilityRole="button" accessibilityLabel="Vehicle details, optional" accessibilityState={{ expanded: showVehicle }}
+          style={styles.choice} onPress={() => setShowVehicle(!showVehicle)}>
+          <Ionicons name="car-outline" size={22} color={cyan} />
+          <View style={styles.flex}>
+            <Text style={styles.label}>Vehicle details</Text>
+            <Text style={styles.caption}>{showVehicle ? 'Optional' : vehicleLabel(draft) || 'Optional · you can add this later'}</Text>
+          </View>
+          <Ionicons name={showVehicle ? 'chevron-up' : 'chevron-down'} size={18} color={cyan} />
+        </Pressable>
+        {showVehicle && fields.slice(2).map(([field, label]) => profileField(field, label))}
         <View style={styles.consent}>
           <Text style={[styles.body, styles.flex]}>I understand registration is free and wash access requires separate paid enrollment after opening.</Text>
           <Switch accessibilityLabel="Acknowledge free pre-opening registration" value={acknowledged} onValueChange={setAcknowledged} />
         </View>
+        {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{error}</Text>}
         <Button label={busy ? 'Saving…' : profile ? 'Save profile' : 'Join free'} onPress={() => void save()} disabled={busy || !acknowledged || !draft.first_name.trim() || !draft.last_name.trim()} />
       </Card>
     )
@@ -309,22 +381,44 @@ function WashClub() {
             </View>
             <BrandGradient />
           </View>
-          {error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{error}</Text>}
+          {error && tab !== 'Garage' && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>{error}</Text>}
           {tab === 'Home' && <>
-            <LinearGradient colors={['#0A2B4B', '#071B33']} style={styles.hero}>
-              <Text style={styles.eyebrow}>{profile ? 'PRE-OPENING MEMBER' : 'FREE PRE-OPENING REGISTRATION'}</Text>
-              <Heading title={profile ? `Welcome, ${profile.first_name}.` : 'Your wash club. In your pocket.'}
-                subtitle={profile ? `Your preferred club is ${profile.preferred_plan}.` : 'Save your vehicle and pick the club you’re interested in. Registration is free.'} />
-              <ClubArtwork club={homeArtwork} size="hero" />
-              <Button label={profile ? 'View my garage' : 'Join free'} onPress={() => navigate('Garage')} />
-              <Button label="Compare wash clubs" secondary onPress={() => navigate('Clubs')} />
-            </LinearGradient>
+            {initializing || (userId && !profileReady) ? profileLoading() : (
+              <LinearGradient colors={['#0A2B4B', '#071B33']} style={styles.hero}>
+                <Text style={styles.eyebrow}>{profile ? 'PRE-OPENING MEMBER' : 'FREE PRE-OPENING REGISTRATION'}</Text>
+                <Heading title={profile ? `Welcome, ${profile.first_name}.` : 'Your wash club. In your pocket.'}
+                  subtitle={profile ? undefined : 'Choose the wash club you’re interested in and register free.'} />
+                {profile ? (
+                  <View style={styles.savedClub}>
+                    <ClubArtwork club={profile.preferred_plan} size="compact" />
+                    <View style={styles.flex}>
+                      <Text style={styles.caption}>Preferred wash club</Text>
+                      <Text style={[styles.label, { color: clubArt[profile.preferred_plan].tint }]}>{profile.preferred_plan} Wash Club</Text>
+                    </View>
+                  </View>
+                ) : <ClubArtwork club="Dragon" size="hero" />}
+                {profile && (
+                  <View style={styles.withIcon}>
+                    <Ionicons name="car-outline" size={22} color={cyan} />
+                    <View style={styles.flex}>
+                      <Text style={styles.caption}>My Garage</Text>
+                      <Text style={styles.label}>{vehicleLabel(profile) || 'Add a vehicle whenever you’re ready'}</Text>
+                    </View>
+                  </View>
+                )}
+                <Button label={profile ? 'View my garage' : userId ? 'Finish registration' : 'Join free'} onPress={() => navigate('Garage')} />
+                <Button label="Compare wash clubs" secondary onPress={() => navigate('Clubs')} />
+              </LinearGradient>
+            )}
             <Card>
               <View style={styles.withIcon}>
-                <Ionicons name="qr-code-outline" size={22} color={cyan} />
-                <Text style={[styles.cardTitle, styles.flex]}>Wash access</Text>
+                <Ionicons name="calendar-outline" size={22} color={cyan} />
+                <Text accessibilityRole="header" style={[styles.cardTitle, styles.flex]}>Opening updates</Text>
               </View>
-              <Text style={styles.body}>Live wash passes and wash history will be available after opening and paid enrollment.</Text>
+              <Text style={styles.body}>We’re preparing to open. Visit Braxy Buns online for announcements. Wash access starts after opening and separate paid enrollment.</Text>
+              <Button label="Visit braxybuns.com" secondary onPress={() => {
+                void Linking.openURL(origin).catch(() => setError('Couldn’t open the Braxy Buns website.'))
+              }} />
             </Card>
           </>}
           {tab === 'Clubs' && <>
@@ -392,7 +486,7 @@ function WashClub() {
         </View>
       </KeyboardAvoidingView>
       <Modal visible={Boolean(confirmation)} transparent animationType="fade" onRequestClose={() => setConfirmation(null)}>
-        <View style={styles.overlay}>
+        <View style={styles.overlay} accessibilityViewIsModal>
           <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
             {confirmation && <Card>
               <Text accessibilityRole="header" style={styles.title}>{confirmation.isNew ? `You’re in, ${confirmation.name}!` : 'Your profile is updated!'}</Text>
@@ -405,7 +499,7 @@ function WashClub() {
                 </View>
               </View>
               <Text style={styles.body}>Free registration. No payment or subscription was created.</Text>
-              <Button label="Explore my club" onPress={() => { setConfirmation(null); navigate('Home') }} />
+              <Button label="Go to my home screen" onPress={() => { setConfirmation(null); navigate('Home') }} />
               <Button label="Review my profile" secondary onPress={() => setConfirmation(null)} />
             </Card>}
           </ScrollView>
@@ -432,16 +526,18 @@ const styles = StyleSheet.create({
   heading: { gap: 10, marginBottom: 5 },
   title: { color: '#fff', fontSize: 33, fontWeight: '800', letterSpacing: -1 },
   body: { color: '#C2D7E5', fontSize: 16, lineHeight: 24 },
+  caption: { color: '#C2D7E5', fontSize: 14, lineHeight: 21 },
   card: { gap: 12, padding: 18, borderWidth: 1, borderColor: '#294258', backgroundColor: '#122031', borderRadius: 20 },
   cardTitle: { color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: -0.4 },
   label: { color: '#f1f8ff', fontSize: 16, fontWeight: '600' },
   input: { minHeight: 48, marginTop: 7, borderRadius: 10, borderColor: '#456278', borderWidth: 1, backgroundColor: '#061426', color: '#fff', padding: 12, fontSize: 16 },
+  codeInput: { fontSize: 22, letterSpacing: 2 },
   buttonBorder: { borderRadius: 13, padding: 2 },
   button: { minHeight: 48, borderRadius: 11, backgroundColor: '#071B33', flexDirection: 'row', gap: 9, alignItems: 'center', justifyContent: 'center', padding: 11 },
   buttonLabel: { flexShrink: 1, color: '#fff', textAlign: 'center', fontWeight: '700', fontSize: 16 },
   secondary: { backgroundColor: 'transparent', borderColor: '#456278', borderWidth: 1 },
   disabled: { opacity: 0.48 },
-  choice: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 9, borderWidth: 1, borderColor: '#456278' },
+  choice: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 9, borderWidth: 1, borderColor: '#456278' },
   choiceDot: { width: 8, height: 8, borderRadius: 4 },
   selected: { backgroundColor: '#193449', borderColor: '#3E7B91' },
   consent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
