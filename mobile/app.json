@@ -7,8 +7,12 @@
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
     "ios": {
+      "icon": "./assets/ios-icon.png",
       "bundleIdentifier": "com.braxybuns.washclub",
       "supportsTablet": false,
+      "infoPlist": {
+        "CFBundleDisplayName": "Braxy Buns"
+      },
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -28,7 +32,8 @@
       ]
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "owner": "braxy-buns-car-wash-team",
     "extra": {
